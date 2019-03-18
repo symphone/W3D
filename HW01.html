@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+
+
+</style>
+</head>
+
+<body>
+<div>
+<!--
+  <div id="light" style="position:absolute;top:10vw;left:30vw;  
+background:pink;width:20px;height:20px;  
+border-radius:15px;z-index:1"></div>
+-->
+  <img src="https://i.imgur.com/yqEGLGu.jpg" style="position:absolute;top:0vw;left:0vw;width:70vw;z-index:-1">
+  <!--input type="image" src="https://i.imgur.com/U4sH3zB.jpg" alt="Submit" height="200" width="400" style="position:absolute;top:0vw;left:60vw;z-index:-1"-->
+   <button id="b" style="width:20%">總開關</button>
+</div>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script>
+class Light {
+  
+  constructor() {  
+    // https://stackoverflow.com/questions/14004117/create-div-and-append-div-dynamically
+    this.element = document.createElement ('div');
+    this.element.id = 'light';
+    this.element.style.cssText = "position:absolute;width:20px;height:20px;border-radius:15px;z-index:1"; 
+	  this.element.style.top = '10vw';
+    this.element.style.left = '30vw';
+    this.element.style.background = "hsl(89, 43%, 51%)";
+    document.getElementsByTagName('body')[0].appendChild(this.element);
+    this.power = true;
+  }
+
+	changeColor() {
+  	// https://stackoverflow.com/questions/45147661/javascript-recursion-within-a-class/45147713
+    var self = this;
+  	var hue
+    var blink = Math.random()*1500 + 500;
+    if(self.power){
+      hue = Math.random()*360;
+    }
+    else
+    	hue = 60
+    self.element.style.background = "hsl(" + hue + ", 43%, 51%)";
+    setTimeout (function() { self.changeColor() } , blink);
+		
+  }
+  switchPow(){
+  	this.power = !this.power
+  }
+
+}
+
+////////////////////////////////
+var light = []
+init();
+$('#b').click(function(){ light.forEach(function(element){ element.switchPow() } ) })
+function init() {
+	for(let i = 0; i < 10; i++){
+  	light[i] = new Light();
+    light[i].changeColor();
+  }
+  light[1].element.style.top = '12vw';
+  light[1].element.style.left = '35vw';
+  
+  light[2].element.style.top = '18vw';
+  light[2].element.style.left = '33vw';
+  
+  light[3].element.style.top = '26vw';
+  light[3].element.style.left = '38vw';
+  
+  light[4].element.style.top = '35vw';
+  light[4].element.style.left = '33vw';
+  
+  light[5].element.style.top = '43vw';
+  light[5].element.style.left = '28vw';
+  
+  light[6].element.style.top = '55vw';
+  light[6].element.style.left = '45vw';
+  
+  light[7].element.style.top = '70vw';
+  light[7].element.style.left = '36vw';
+  
+  light[8].element.style.top = '68vw';
+  light[8].element.style.left = '60vw';
+  
+  light[9].element.style.top = '78vw';
+  light[9].element.style.left = '10vw';
+  
+}
+
+
+
+</script>
+</body>
+
+</html>
