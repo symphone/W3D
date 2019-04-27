@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+  top: 2%;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ff0000;
+}
+
+#saftycamera {
+  background-color: red;
+}
+
+#saftycameraT {
+  background-color: blue;
+}
+
+#imgMap {
+  background-color: green;
+}
+
+</style>
+</head>
+
+<body> 
+<div style="text-align: center">葛飾北齋</div>
+<hr>
+<div id="info">
+  <a href="https://i.imgur.com/A1SrrQ6.jpg">design diagram</a>
+  <select name="seleP" onchange="submit();">
+    <option value="paint1">神奈川沖浪裏</option>
+    <option value="paint2">東都駿䑓</option>
+    <option value="paint3">深川万年橋下</option>
+    <option value="paint4">凱風快晴</option>
+    <option value="paint5">山下白雨</option>
+    <option value="paint6">青山圎𫝶枩</option>
+</select>
+</div>
+<div id="container" style="float:left; margin:3px; width:50vw; height:50vw">
+</div>
+<div id="imgMap" style="float:right; margin:3px; width:43vw; height:20vw">
+</div>
+<div id="saftycamera4" style="float:right; margin:5px; width:10vw; height:10vw">
+</div>
+<div id="saftycamera3" style="float:right; margin:5px; width:10vw; height:10vw">
+</div>
+<div id="saftycamera2" style="float:right; margin:5px; width:10vw; height:10vw">
+</div>
+<div id="saftycamera1" style="float:right; margin:5px; width:10vw; height:10vw">
+</div>
+<div id="saftycameraT" style="float:right; margin:3px; width:43vw; height:20vw">
+</div>
+<!--div style="height: 60vw">BB</div-->
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<div id='describe'></div>
+<hr>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js">
+</script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js">
+</script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<script>
+class Lamp {
+  constructor(pos) {
+  	var loader = new THREE.TextureLoader();
+    loader.crossOrigin = ''
+    var texture = loader.load('https://i.imgur.com/uSmKvKo.jpg');
+     texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+     
+    this.lamp = new THREE.Object3D();
+    //var axis = new THREE.AxisHelper(40);
+    //this.lamp.add(axis);
+    var lampbody = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, 30), new THREE.MeshPhongMaterial({ map: texture }));
+    this.lamp.add(lampbody);
+    lampbody.position.set(0, 0, 15);
+    lampbody.rotation.x = Math.PI / 2;
+    this.lamp.position.copy(pos) // fix to a point on ceiling
+    scene.add(this.lamp);
+    ///////////
+    this.spotLight = new THREE.SpotLight(0xffffff);
+    scene.add(this.spotLight);
+    this.spotLight.position.copy(this.lamp.position);
+
+    this.spotLight.angle = 0.8;
+    this.spotLight.penumbra = 0.4;
+    this.spotLight.distance = 600;
+    this.spotLight.decay = 1;
+    //this.spotLight.target = tar;
+
+    //var spotLightHelper = new THREE.SpotLightHelper(this.spotLight);
+    //scene.add(spotLightHelper);
+  }
+
+}
+
+class IndoorLight {
+  constructor(pos) {
+    this.light = new THREE.PointLight(0xffffff, 0.5, 1000);
+    this.light.position.copy(pos);
+    scene.add(this.light);
+    var sphereSize = 10;
+    var pointLightHelper = new THREE.PointLightHelper(this.light, sphereSize);
+    //scene.add( pointLightHelper );
+  }
+
+}
+
+class Wall {
+  constructor([w, h, l], pos) {
+    var wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, l), new THREE.MeshPhongMaterial())
+    wall.position.copy(pos)
+    scene.add(wall)
+  }
+}
+
+class Chair {
+  constructor(pos, rot = 0) {
+    var chair = new THREE.Mesh(new THREE.BoxGeometry(120, 10, 60), new THREE.MeshPhongMaterial({
+      color: 0xff0000
+    }))
+    var legL = new THREE.Mesh(new THREE.BoxGeometry(10, 30, 60), new THREE.MeshPhongMaterial({
+      color: 0xff0000
+    }))
+    var legR = new THREE.Mesh(new THREE.BoxGeometry(10, 30, 60), new THREE.MeshPhongMaterial({
+      color: 0xff0000
+    }))
+    chair.add(legL, legR)
+    legL.position.set(-55, -20, 0)
+    legR.position.set(55, -20, 0)
+    chair.position.copy(pos)
+    chair.rotation.y = rot
+    scene.add(chair)
+  }
+}
+
+class Paint {
+  constructor(url, [x, y], pos) {
+    var loader = new THREE.TextureLoader();
+    loader.crossOrigin = ''
+    var texture = loader.load(url);
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(x, y), new THREE.MeshPhongMaterial({
+      map: texture
+    }))
+    this.mesh.position.copy(pos)
+
+    //this.target = new THREE.Mesh(new THREE.BoxGeometry(10,10,10))
+    this.target = new THREE.Object3D()
+    this.target.position.copy(pos)
+    this.target.position.y -= y / 4
+
+    scene.add(this.mesh, this.target)
+  }
+}
+
+class SaftyCamera {
+  constructor(pos) {
+  	var loader = new THREE.TextureLoader();
+    loader.crossOrigin = ''
+    var texture = loader.load('https://i.imgur.com/uSmKvKo.jpg');
+     texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    this.cameraObj = new THREE.Object3D();
+    var cameraBody = new THREE.Mesh(new THREE.BoxGeometry(40, 24, 10), new THREE.MeshPhongMaterial({ map: texture }));
+    var lens = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, 20, 30), new THREE.MeshPhongMaterial({ map: texture }));
+    lens.position.z = -10;
+    lens.rotation.x = Math.PI / 2;
+    this.cameraObj.add(cameraBody, lens);
+
+    this.cameraCase = new THREE.Object3D();
+    this.cameraCase.add(this.cameraObj);
+    this.cameraCase.position.copy(pos);
+    scene.add(this.cameraCase);
+  }
+}
+
+var pointLights = []
+var lightsOff = false
+var saftycameras = []
+var sCams = []
+var renderSCs = [] //saftycamera render
+//var scIndex = 0
+var mouse = new THREE.Vector2();
+var raycaster = new THREE.Raycaster();
+var pickables = [];
+
+$('#intensity').change(function() {
+  //use forEach do not work
+  for (let i = 0; i < pointLights.length; i++)
+    pointLights[i].light.intensity = $(this).val();
+})
+$('#lightSwitch').click(function() {
+  lightsOff = !lightsOff;
+
+  if (lightsOff) {
+    for (let i = 0; i < pointLights.length; i++)
+      pointLights[i].light.intensity = 0;
+  } else {
+    for (let i = 0; i < pointLights.length; i++)
+      pointLights[i].light.intensity = 0.5;
+  }
+});
+
+var scene, renderer, camera;
+var controls;
+var keys = [
+  [0, 0], [0.4, 0.6], [0.5, 0.6], [0.9, 0], [1, 0]
+];
+var T = 5;
+var clock = new THREE.Clock();
+var ts = clock.getElapsedTime();
+
+init();
+animate();
+
+function init() {
+	var ww = $("#container").innerWidth();
+  var hh = $("#container").innerHeight();
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(ww, hh);
+  renderer.setClearColor(0x888888);
+  $("#container").append(renderer.domElement);
+  
+  camera = new THREE.PerspectiveCamera(50, ww / hh, 1, 10000);
+  camera.position.y = 2300;
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  
+  var ww2 = $("#saftycamera1").innerWidth();
+  var hh2 = $("#saftycamera1").innerHeight();
+  renderSCs[0] = new THREE.WebGLRenderer();
+  renderSCs[0].setSize(ww2, hh2);
+  renderSCs[0].setClearColor(0x888888);
+  $("#saftycamera1").append(renderSCs[0].domElement);
+  
+  var ww3 = $("#saftycamera2").innerWidth();
+  var hh3 = $("#saftycamera2").innerHeight();
+  renderSCs[1] = new THREE.WebGLRenderer();
+  renderSCs[1].setSize(ww3, hh3);
+  renderSCs[1].setClearColor(0x888888);
+  $("#saftycamera2").append(renderSCs[1].domElement);
+  
+  var ww4 = $("#saftycamera3").innerWidth();
+  var hh4 = $("#saftycamera3").innerHeight();
+  renderSCs[2] = new THREE.WebGLRenderer();
+  renderSCs[2].setSize(ww4, hh4);
+  renderSCs[2].setClearColor(0x888888);
+  $("#saftycamera3").append(renderSCs[2].domElement);
+  
+  var ww5 = $("#saftycamera4").innerWidth();
+  var hh5 = $("#saftycamera4").innerHeight();
+  renderSCs[3] = new THREE.WebGLRenderer();
+  renderSCs[3].setSize(ww5, hh5);
+  renderSCs[3].setClearColor(0x888888);
+  $("#saftycamera4").append(renderSCs[3].domElement);
+  
+  var ww6 = $("#saftycameraT").innerWidth();
+  var hh6 = $("#saftycameraT").innerHeight();
+  renderSCs[4] = new THREE.WebGLRenderer();
+  renderSCs[4].setSize(ww6, hh6);
+  renderSCs[4].setClearColor(0x888888);
+  $("#saftycameraT").append(renderSCs[4].domElement);
+  
+/////////////
+  scene = new THREE.Scene();
+  /*
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x888888);
+  document.body.appendChild(renderer.domElement);
+	
+  camera = new THREE.PerspectiveCamera(50, ww / hh, 1, 10000);
+  camera.position.y = 2300;
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+	*/
+  var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+  //scene.add(gridXZ);
+
+  window.addEventListener('resize', onWindowResize, false);
+  ///////////////////////////////
+  var w = 1600,
+    h = 300,
+    l = 800,
+    thick = 30
+
+  //floor
+  var loader = new THREE.TextureLoader();
+  loader.crossOrigin = ''
+  var texture = loader.load("https://i.imgur.com/GW3qD4p.jpg?2");
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(20, 10)
+  var floor = new THREE.Mesh(new THREE.PlaneGeometry(w, l), new THREE.MeshPhongMaterial({
+    map: texture
+  }))
+  floor.rotation.x = -Math.PI / 2
+
+  var ceiling = new THREE.Mesh(new THREE.PlaneGeometry(w - thick, l - thick), new THREE.MeshBasicMaterial({
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.1
+  }))
+  ceiling.rotation.x = Math.PI / 2
+  ceiling.position.set(0, h, 0)
+
+  scene.add(floor, ceiling)
+
+  ////////////////////////////////////////////////////
+  //wall
+  var walls = [] //0~3 outer
+  walls[0] = new Wall([w + thick, h, thick], new THREE.Vector3(0, h / 2, l / 2));
+  walls[1] = new Wall([w + thick, h, thick], new THREE.Vector3(0, h / 2, -l / 2));
+  walls[2] = new Wall([thick, h, l - thick], new THREE.Vector3(-w / 2, h / 2, 0));
+  walls[3] = new Wall([thick, h, l - thick], new THREE.Vector3(w / 2, h / 2, 0));
+
+  walls[4] = new Wall([thick, h, l / 5], new THREE.Vector3(-w / 5, h / 2, l / 6 + l / 10));
+  walls[5] = new Wall([thick, h, l / 3], new THREE.Vector3(-w / 3, h / 2, -l / 2 + l / 6));
+  walls[6] = new Wall([w / 10 + 10, h, thick], new THREE.Vector3(-w / 2 + w / 20 + 10, h / 2, l / 6));
+  walls[7] = new Wall([w / 4, h, thick], new THREE.Vector3(-w / 6, h / 2, l / 6));
+
+  walls[8] = new Wall([thick, h, l / 5], new THREE.Vector3(w / 5, h / 2, l / 6 + l / 10));
+  walls[9] = new Wall([thick, h, l / 3], new THREE.Vector3(w / 3, h / 2, -l / 2 + l / 6));
+  walls[10] = new Wall([w / 10 + 10, h, thick], new THREE.Vector3(w / 2 - w / 20 - 10, h / 2, l / 6));
+  walls[11] = new Wall([w / 4, h, thick], new THREE.Vector3(w / 6, h / 2, l / 6));
+  //walls[12] = new Wall([thick, h, l], new THREE.Vector3(0, h/2, 0));
+  var steadys = []
+  steadys[0] = new Wall([5, 5, l*4/6-thick], new THREE.Vector3(-w/3-100, h, -l/6))
+  steadys[1] = new Wall([5, 5, l*4/6-thick], new THREE.Vector3(w/3+100, h, -l/6))
+  steadys[2] = new Wall([2*w/5-thick, 5, 5], new THREE.Vector3(0, h, l/6+l/10))
+
+  //////////////
+  //light
+  var light = new THREE.AmbientLight(0x444444); // soft white light
+  scene.add(light);
+  var lamps = []
+  lamps[0] = new Lamp(new THREE.Vector3(-w / 8, h, l / 6 + l / 10));
+  lamps[1] = new Lamp(new THREE.Vector3(-w / 3 - 100, h, -l / 2 + l / 6));
+  lamps[2] = new Lamp(new THREE.Vector3(-w / 3 - 100, h, -l / 2 + l / 10 + 250));
+
+  lamps[3] = new Lamp(new THREE.Vector3(w / 8, h, l / 6 + l / 10));
+  lamps[4] = new Lamp(new THREE.Vector3(w / 3 + 100, h, -l / 2 + l / 6));
+  lamps[5] = new Lamp(new THREE.Vector3(w / 3 + 100, h, -l / 2 + l / 10 + 250));
+
+  //var pointLights = [];
+  pointLights[0] = new IndoorLight(new THREE.Vector3(w / 2 - thick, h, l / 2 - thick))
+  pointLights[1] = new IndoorLight(new THREE.Vector3(w / 2 - thick, h, -l / 2 + thick))
+  pointLights[2] = new IndoorLight(new THREE.Vector3(-w / 2 + thick, h, l / 2 - thick))
+  pointLights[3] = new IndoorLight(new THREE.Vector3(-w / 2 + thick, h, -l / 2 + thick))
+  pointLights[4] = new IndoorLight(new THREE.Vector3(0, h, l / 2 - thick))
+  pointLights[5] = new IndoorLight(new THREE.Vector3(0, h, -l / 2 + thick))
+
+  /////////////
+  //chair
+  var chairs = []
+  chairs[0] = new Chair(new THREE.Vector3(-300, 35, -80))
+  chairs[1] = new Chair(new THREE.Vector3(150, 35, -50))
+  chairs[2] = new Chair(new THREE.Vector3(400, 35, -70))
+  chairs[3] = new Chair(new THREE.Vector3(-240, 35, -250), Math.PI / 2)
+  chairs[4] = new Chair(new THREE.Vector3(235, 35, -230))
+
+  ////////////
+  //paint
+  var paints = []
+  paints[0] = new Paint('https://i.imgur.com/i1uW9vb.jpg', [155, 105], new THREE.Vector3(-w / 8, h * 0.7, l / 6 + thick / 2 + 1));
+  lamps[0].spotLight.target = paints[0].target
+  //lamps[0].lamp.rotation.x = -Math.PI/3
+  lamps[0].lamp.lookAt(paints[0].target.position)
+  paints[1] = new Paint('https://i.imgur.com/3B2pnoN.jpg', [155, 105], new THREE.Vector3(-w / 3 - thick / 2 - 1, h * 0.7, -l / 2 + l / 6));
+  paints[1].mesh.rotation.y = -Math.PI / 2;
+  lamps[1].spotLight.target = paints[1].target
+  lamps[1].lamp.lookAt(paints[1].target.position)
+  paints[2] = new Paint('https://i.imgur.com/TndLZQt.jpg', [155, 105], new THREE.Vector3(-w / 2 + thick / 2 + 1, h * 0.7, -l / 2 + l / 10 + 250));
+  paints[2].mesh.rotation.y = Math.PI / 2;
+  lamps[2].spotLight.target = paints[2].target
+  lamps[2].lamp.lookAt(paints[2].target.position)
+
+  paints[3] = new Paint('https://i.imgur.com/LO04N1E.jpg', [155, 105], new THREE.Vector3(w / 8, h * 0.7, l / 6 + thick / 2 + 1));
+  lamps[3].spotLight.target = paints[3].target
+  lamps[3].lamp.lookAt(paints[3].target.position)
+  paints[4] = new Paint('https://i.imgur.com/Av46TOd.jpg', [155, 105], new THREE.Vector3(w / 3 + thick / 2 + 1, h * 0.7, -l / 2 + l / 6));
+  paints[4].mesh.rotation.y = Math.PI / 2;
+  lamps[4].spotLight.target = paints[4].target
+  lamps[4].lamp.lookAt(paints[4].target.position)
+  paints[5] = new Paint('https://i.imgur.com/wCZIdWl.jpg', [155, 105], new THREE.Vector3(w / 2 - thick / 2 - 1, h * 0.7, -l / 2 + l / 10 + 250));
+  paints[5].mesh.rotation.y = -Math.PI / 2;
+  lamps[5].spotLight.target = paints[5].target
+  lamps[5].lamp.lookAt(paints[5].target.position)
+  paints[0].mesh.name = '神奈川沖浪裏';
+  paints[1].mesh.name = '東都駿䑓';
+  paints[2].mesh.name = '深川万年橋下';
+  paints[3].mesh.name = '凱風快晴';
+  paints[4].mesh.name = '山下白雨';
+  paints[5].mesh.name = '青山圎𫝶枩';
+  pickables.push(paints[0].mesh, paints[1].mesh, paints[2].mesh, paints[3].mesh, paints[4].mesh, paints[5].mesh)
+  /*paints.forEach(function(p, i){
+  	pickables.push(p[i].mesh);
+  })*/
+  ////////////
+  //camera
+  sCams[0] = new THREE.PerspectiveCamera(50, ww2 / hh2, 1, 1000);
+  sCams[1] = new THREE.PerspectiveCamera(50, ww3 / hh3, 1, 1000);
+  sCams[2] = new THREE.PerspectiveCamera(50, ww4 / hh4, 1, 1000);
+  sCams[3] = new THREE.PerspectiveCamera(50, ww5 / hh5, 1, 1000);
+  sCams[4] = new THREE.PerspectiveCamera(50, ww6 / hh6, 1, 1000);
+  sCams[5] = new THREE.PerspectiveCamera(50, ww6 / hh6, 1, 1000);
+  sCams[6] = new THREE.PerspectiveCamera(50, ww6 / hh6, 1, 1000);
+  sCams[7] = new THREE.PerspectiveCamera(50, ww6 / hh6, 1, 1000);
+  
+  saftycameras[0] = new SaftyCamera(new THREE.Vector3(-w/3-100, h-12, l/6-thick));
+  saftycameras[0].cameraCase.rotation.x = -Math.PI/6
+  saftycameras[0].cameraCase.rotation.order = 'YXZ';
+  
+  saftycameras[1] = new SaftyCamera(new THREE.Vector3(w/3+100, h-12, l/6-thick));
+  saftycameras[1].cameraCase.rotation.x = -Math.PI/6
+  saftycameras[1].cameraCase.rotation.order = 'YXZ';
+  
+  saftycameras[2] = new SaftyCamera(new THREE.Vector3(0, h-12, l/2-thick));
+  saftycameras[2].cameraCase.rotation.x = -Math.PI/6
+  saftycameras[2].cameraCase.rotation.order = 'YXZ';
+  
+  saftycameras[3] = new SaftyCamera(new THREE.Vector3(0, h-12, -l/2+thick));
+  saftycameras[3].cameraCase.rotation.y = -Math.PI
+  saftycameras[3].cameraCase.rotation.x = -Math.PI/6
+  saftycameras[3].cameraCase.rotation.order = 'YXZ';
+  
+  
+  saftycameras[4] = new SaftyCamera(new THREE.Vector3(-w/3-100, h-12, l/6-thick));
+  saftycameras[4].cameraCase.rotation.x = -Math.PI/6
+  saftycameras[4].cameraCase.rotation.order = 'YXZ';
+  
+  saftycameras[5] = new SaftyCamera(new THREE.Vector3(w/3+100, h-12, l/6-thick));
+  saftycameras[5].cameraCase.rotation.x = -Math.PI/6
+  saftycameras[5].cameraCase.rotation.order = 'YXZ';
+  
+  saftycameras[6] = new SaftyCamera(new THREE.Vector3(0, h-12, l/2-thick));
+  saftycameras[6].cameraCase.rotation.x = -Math.PI/6
+  saftycameras[6].cameraCase.rotation.order = 'YXZ';
+  
+  saftycameras[7] = new SaftyCamera(new THREE.Vector3(0, h-12, -l/2+thick));
+  saftycameras[7].cameraCase.rotation.y = -Math.PI
+  saftycameras[7].cameraCase.rotation.x = -Math.PI/6
+  saftycameras[7].cameraCase.rotation.order = 'YXZ';
+	///////////
+  //raycaster
+  window.addEventListener('resize', onWindowResize, false);
+  $('#container').on ("mousemove", onDocumentMouseMove);
+}
+
+function onDocumentMouseMove(event) {
+
+  var viewportPos =$('#container').get(0).getBoundingClientRect(); 
+	mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+  mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+
+	raycaster.setFromCamera(mouse, camera);
+  var intersects = raycaster.intersectObjects (pickables);
+  if (intersects.length > 0) {
+    //cyl.position.copy(intersects[0].point);
+    //alert (intersects[0].object.position.x + " is picked!")
+    $('#describe').text(intersects[0].object.name)
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  render();
+}
+
+function onWindowResize() {
+  var ww = $("#container").innerWidth();
+  var hh = $("#container").innerHeight();
+  camera.aspect = ww / hh;
+  camera.updateProjectionMatrix();
+  renderer.setSize(ww, hh);
+  
+  ww = $("#saftycamera1").innerWidth();
+  hh = $("#saftycamera1").innerHeight();
+  sCams[0].aspect = ww / hh;
+  sCams[0].updateProjectionMatrix();
+  renderSCs[0].setSize(ww, hh);
+  
+  ww = $("#saftycamera2").innerWidth();
+  hh = $("#saftycamera2").innerHeight();
+  sCams[1].aspect = ww / hh;
+  sCams[1].updateProjectionMatrix();
+  renderSCs[1].setSize(ww, hh);
+  
+  ww = $("#saftycamera3").innerWidth();
+  hh = $("#saftycamera3").innerHeight();
+  sCams[2].aspect = ww / hh;
+  sCams[2].updateProjectionMatrix();
+  renderSCs[2].setSize(ww, hh);
+  
+  ww = $("#saftycamera4").innerWidth();
+  hh = $("#saftycamera4").innerHeight();
+  sCams[3].aspect = ww / hh;
+  sCams[3].updateProjectionMatrix();
+  renderSCs[3].setSize(ww, hh);
+  
+  ww = $("#saftycameraT").innerWidth();
+  hh = $("#saftycameraT").innerHeight();
+  sCams[4].aspect = ww / hh;
+  sCams[4].updateProjectionMatrix();
+  renderSCs[4].setSize(ww, hh);
+}
+function keyframe(t) {
+  var s = ((t - ts) % T) / T;
+  //console.log(s);
+
+  for (var i = 1; i < keys.length; i++) {
+    if (keys[i][0] > s) break;
+  }
+  // take i-1
+  var ii = i - 1;
+  //console.log (ii)
+  var a = (s - keys[ii][0]) / (keys[ii + 1][0] - keys[ii][0]);
+  intKey = keys[ii][1] * (1 - a) + keys[ii + 1][1] * a;
+  //console.log (a)
+	return intKey;
+  //console.log (intKey);  // array linear combo?!
+}
+
+function animate() {
+	let intkey = keyframe(clock.getElapsedTime());
+  saftycameras.forEach(function(cam, index){
+  	cam.cameraObj.rotation.y = intkey - 0.3;
+    sCams[index].matrixWorld.copy (saftycameras[index].cameraObj.matrixWorld);
+  	sCams[index].matrixAutoUpdate = false;
+  })
+  
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+  renderSCs[0].render(scene, sCams[0])
+  renderSCs[1].render(scene, sCams[1])
+  renderSCs[2].render(scene, sCams[2])
+  renderSCs[3].render(scene, sCams[3])
+  /*var cam
+  switch(scIndex){
+  	case 0: cam = sCams[0]; break;
+    case 1: cam = sCams[1]; break;
+  }*/
+  renderSCs[4].render(scene, sCams[4])
+}
+
+
+</script>
+</body>
+
+</html>
