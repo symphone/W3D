@@ -9,7 +9,6 @@
   width: 100%;
   padding: 10px;
   text-align: center;
-  color: #ff0000;
 }
 
 #saftycamera {
@@ -20,19 +19,19 @@
   background-color: blue;
 }
 
-#imgMap {
-  background-color: green;
+#func {
+   position:relative;
+   bottom: 30px;
 }
 
 </style>
 </head>
 
 <body> 
-<div style="text-align: center">葛飾北齋</div>
+<div style="text-align: center">葛飾北齋浮世繪展(imgMap don't work)</div>
 <hr>
 <div id="info">
-  <a href="https://i.imgur.com/A1SrrQ6.jpg">design diagram</a>
-  <select name="seleP" onchange="submit();">
+  選擇欲參觀的畫作<select id="seleP" >
     <option value="paint1">神奈川沖浪裏</option>
     <option value="paint2">東都駿䑓</option>
     <option value="paint3">深川万年橋下</option>
@@ -43,8 +42,15 @@
 </div>
 <div id="container" style="float:left; margin:3px; width:50vw; height:50vw">
 </div>
-<div id="imgMap" style="float:right; margin:3px; width:43vw; height:20vw">
+<div>
+<img src="https://i.imgur.com/uoPgXij.jpg" style=" margin:3px; width:35vw; height:17vw" usemap='#scSwitch'>
 </div>
+<map name="#scSwitch">
+  <area shape="circle" class='scS' id='cam1' coords="367,39,33" href="#">
+  <area shape="circle" class='scS' id='cam2' coords="352,356,41" href="#">
+  <area shape="circle" class='scS' id='cam3' coords="104,204,20" href="#">
+  <area shape="circle" class='scS' id='cam4' coords="622,207,25" href="#">
+</map>
 <div id="saftycamera4" style="float:right; margin:5px; width:10vw; height:10vw">
 </div>
 <div id="saftycamera3" style="float:right; margin:5px; width:10vw; height:10vw">
@@ -56,13 +62,19 @@
 <div id="saftycameraT" style="float:right; margin:3px; width:43vw; height:20vw">
 </div>
 
-<div id='describe' style="float: left"></div>
-<hr>
+<div id='describe' style="float: left; vertical-align:bottom;">神奈川沖浪裏</div>
+<button id='out' style="float: right">OUT</button>&nbsp;
+<div style="float: right">zoom</div>&nbsp;
+<button id='in' style="float: right">IN</button>
+<button id='stop' style="float: right">stop</button>
+<button id='sw' style="float: right">SW</button>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js">
 </script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js">
 </script>
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
 
 <script>
 class Lamp {
@@ -186,7 +198,11 @@ var renderSCs = [] //saftycamera render
 var mouse = new THREE.Vector2();
 var raycaster = new THREE.Raycaster();
 var pickables = [];
-
+var scIndex = 0;
+var prePaint = "";
+var paints = []
+var stop = false
+/*
 $('#intensity').change(function() {
   //use forEach do not work
   for (let i = 0; i < pointLights.length; i++)
@@ -203,6 +219,40 @@ $('#lightSwitch').click(function() {
       pointLights[i].light.intensity = 0.5;
   }
 });
+*/
+$("#in").click(function() {
+  sCams[scIndex+4].zoom += 0.1;
+  sCams[scIndex+4].updateProjectionMatrix()
+});
+
+$("#out").click(function() {
+  sCams[scIndex+4].zoom -= 0.1;
+  sCams[scIndex+4].updateProjectionMatrix()
+});
+
+$("#sw").click(function() {
+  scIndex = (scIndex+1)%4
+});
+
+$("#stop").click(function() {
+  stop = !stop
+});
+
+$('.scS').click(function(e) {
+  e.preventDefault();
+	if (this.id === 'cam1') {
+  	alert('cam1')
+  }
+  else if(this.id === 'cam2') {
+  	alert('cam2')
+  }
+  else if(this.id === 'cam3'){
+  	alert('cam3')
+  }
+  else{
+  	alert('cam4')
+  }
+})
 
 var scene, renderer, camera;
 var controls;
@@ -361,7 +411,7 @@ function init() {
 
   ////////////
   //paint
-  var paints = []
+  //var paints = []
   paints[0] = new Paint('https://i.imgur.com/i1uW9vb.jpg', [155, 105], new THREE.Vector3(-w / 8, h * 0.7, l / 6 + thick / 2 + 1));
   lamps[0].spotLight.target = paints[0].target
   //lamps[0].lamp.rotation.x = -Math.PI/3
@@ -445,6 +495,7 @@ function init() {
   //raycaster
   window.addEventListener('resize', onWindowResize, false);
   $('#container').on ("mousemove", onDocumentMouseMove);
+  
 }
 
 function onDocumentMouseMove(event) {
@@ -522,25 +573,62 @@ function keyframe(t) {
 }
 
 function animate() {
-	let intkey = keyframe(clock.getElapsedTime());
-  saftycameras.forEach(function(cam, index){
-  	cam.cameraObj.rotation.y = intkey - 0.3;
-    sCams[index].matrixWorld.copy (saftycameras[index].cameraObj.matrixWorld);
-  	sCams[index].matrixAutoUpdate = false;
-  })
-  
+	if(!stop){
+    let intkey = keyframe(clock.getElapsedTime());
+    saftycameras.forEach(function(cam, index){
+      cam.cameraObj.rotation.y = intkey - 0.3;
+      sCams[index].matrixWorld.copy (saftycameras[index].cameraObj.matrixWorld);
+      sCams[index].matrixAutoUpdate = false;
+    })
+  }
+  let curPaint = $("#seleP").val()
+  if(prePaint != curPaint){
+  	prePaint = curPaint;
+    if(curPaint === 'paint1'){
+    	camera.position.copy(paints[0].mesh.position)
+    	camera.position.z +=200
+    	camera.lookAt(paints[0].mesh.position)
+    }
+    else if(curPaint === 'paint2'){
+    	camera.position.copy(paints[1].mesh.position)
+    	camera.position.x -=200
+    	camera.lookAt(paints[1].mesh.position)
+    }
+    else if(curPaint === 'paint3'){
+    	camera.position.copy(paints[2].mesh.position)
+    	camera.position.x +=200
+    	camera.lookAt(paints[2].mesh.position)
+    }
+    else if(curPaint === 'paint4'){
+    	camera.position.copy(paints[3].mesh.position)
+    	camera.position.z +=200
+    	camera.lookAt(paints[3].mesh.position)
+    }
+    else if(curPaint === 'paint5'){
+    	camera.position.copy(paints[4].mesh.position)
+    	camera.position.x +=200
+    	camera.lookAt(paints[4].mesh.position)
+    }
+    else if(curPaint === 'paint6'){
+    	camera.position.copy(paints[5].mesh.position)
+    	camera.position.x -=200
+    	camera.lookAt(paints[5].mesh.position)
+    }
+  }
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
   renderSCs[0].render(scene, sCams[0])
   renderSCs[1].render(scene, sCams[1])
   renderSCs[2].render(scene, sCams[2])
   renderSCs[3].render(scene, sCams[3])
-  /*var cam
+  var cam
   switch(scIndex){
-  	case 0: cam = sCams[0]; break;
-    case 1: cam = sCams[1]; break;
-  }*/
-  renderSCs[4].render(scene, sCams[4])
+  	case 0: cam = sCams[4]; break;
+    case 1: cam = sCams[5]; break;
+    case 2: cam = sCams[6]; break;
+    case 3: cam = sCams[7]; break;
+  }
+  renderSCs[4].render(scene, cam)
 }
 
 
