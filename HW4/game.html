@@ -1,0 +1,146 @@
+<html>
+	<head>
+		<title>Three.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		
+
+		<div id="canvas" style="margin-top: 20px; height: 400px; width: 400px; border: solid 1px gray;"></div>
+		<div>Radius<input type=range min=1 max=5 step=1 id='CiriclRad'></div><br>
+		<div id="collision"></div>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+		<script>
+			jQuery.ajaxSetup({async:false})
+			var vX = 0.1
+			var vY = 0.2
+			var rad = 3;
+			var mat1 = new THREE.MeshBasicMaterial({color: 0x00ff00}) //g
+			var mat2 = new THREE.MeshBasicMaterial({color: 0x0000ff}) //b
+			var c = new THREE.Object3D()
+			var circle = new THREE.Mesh(new THREE.CircleGeometry(rad, 32), mat1)
+			c.add(circle)
+			c.position.set(0, 0, 1)
+			var rec = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), new THREE.MeshBasicMaterial({color: 0xff0000}))
+			rec.position.set(0, 0, 0.5)
+			var plane2 = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), new THREE.MeshBasicMaterial())
+			var pickables = []
+			pickables.push(plane2)
+			
+			var mouse = new THREE.Vector2();
+			var raycaster = new THREE.Raycaster();
+			document.addEventListener('mousedown', onDocumentMouseDown, false);
+			
+		    var container = $("#canvas");
+			var scene = new THREE.Scene();
+			var camera = new THREE.PerspectiveCamera( 100, container.width()/container.height(), 0.1, 1000 );
+			camera.position.z = 20;
+			var renderer = new THREE.WebGLRenderer();
+
+			scene.add(plane2, rec, c)
+			renderer.setClearColor( 0xcacaca, 1);
+			$("#canvas").append( renderer.domElement );
+			
+
+			function onDocumentMouseDown(event){
+				//event.preventDefauit();
+				//mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+				//mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+				var viewportPos =$('#canvas').get(0).getBoundingClientRect(); 
+				mouse.x = ((event.clientX - viewportPos.left) / $('#canvas').innerWidth()) * 2 - 1;
+				mouse.y = -((event.clientY - viewportPos.top) / $('#canvas').innerHeight()) * 2 + 1;
+				
+			    raycaster.setFromCamera(mouse, camera);
+			    var intersects = raycaster.intersectObjects(pickables);
+			    if (intersects.length == 1) {
+				    rec.position.copy(intersects[0].point)
+				    rec.position.z = 0.5;
+				}
+			}
+
+			/*function getPos () {
+				// Call api 
+				// Need to be replaced by a public ip address
+				$.get( "http://127.0.0.1:1337/api?K=4&t="+ theta, function( data ) {
+					if(data && data.output){
+						var coords = data.output.split (" ");
+						disc.position.set (10*coords[0], 10*coords[1], 0.0);
+						//console.log (theta + ": " + coords[0] + ", " + coords[1]);
+					}
+				});
+			}*/
+			$('#CiriclRad').change ( function() {
+				//console.log ( $(this).val() );
+				c.remove(c.children[0])
+				rad = $(this).val();
+				let tmp = new THREE.Mesh(new THREE.CircleGeometry(rad, 32), mat1);
+				c.add(tmp)
+			})
+			function getPos() {
+
+				var minx = rec.position.x - 10;
+				var miny = rec.position.y - 5;
+				var maxx = rec.position.x + 10;
+				var maxy = rec.position.y + 5;
+				var px = c.children[0].position.x;
+				var py = c.children[0].position.y;
+			  
+				var param = { obj:[minx, miny, maxx, maxy, px, py, rad] };
+				//console.log (param);
+				var outputStr = jQuery.param (param);
+				//console.log (outputStr);
+				
+				$.get( "http://127.0.0.1:1337/api?"+outputStr, function( data ) {
+					if(data && data.output){
+						//console.log (data.output);
+						if(data.output == 0){
+							c.children[0].material = mat2;
+							$('#collision').text('')
+						}
+						else{
+							c.children[0].material = mat1;
+							$('#collision').text("Collision!")
+						}
+					}
+				}); 	
+  
+			}
+
+			function update(){
+				//jQuery.ajaxSetup({async:false});
+				var limit = 22 - rad;
+				if (vX > 0 && c.children[0].position.x >= limit) {
+				    vX *= -1;
+				}
+				if(vX < 0 && c.children[0].position.x <= -limit) {
+					vX *= -1;
+				}
+				if ((c.children[0].position.y >= limit)) {
+				    vY *= -1;
+				    c.children[0].position.y = limit
+				}
+				if(c.children[0].position.y < -limit) {
+					vY *= -1;
+				    c.children[0].position.y = -limit
+				}
+				c.children[0].position.x += vX;
+				c.children[0].position.y += vY;
+				
+			}
+			var render = function () {
+				requestAnimationFrame( render );
+				update();
+				getPos(); // should use setInterval (unless the Shell does not respond as fast
+				
+				renderer.render(scene, camera);
+			};
+
+			render();
+		</script>
+	</body>
+</html>
