@@ -1,0 +1,330 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+  </head>
+  <body>
+  	<h1 style="text-align:center"> HW5</h1>
+<hr>
+<div id="containerL" style="background-color:pink;float:left; margin:2px; width:30vw; height:30vw">
+  <canvas id='mirrorView'></canvas>
+</div>
+<div id="container" style="background-color:yellow;float:left; margin:2px; width:35vw; height:30vw">
+  <canvas id='frontView'></canvas>
+</div>
+<div id="containerR" style="background-color:pink;float:right; margin:2px; width:30vw; height:30vw">
+  <canvas id='mirrorView2'></canvas>
+</div>
+<div style="float:left; margin-left: 10px; width:32vw; text-align: center;">
+  <button id="stepB" style="width:40%;position:absolute">Step</button>
+</div>
+<div id="fuel" style="font-size:150%; float:left"></div>
+<div id="speed" style="font-size:200%; float:right"></div>
+<!--script src="https://code.jquery.com/jquery-2.1.4.min.js"></script-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
+    
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<!--script src="https://cdn.socket.io/socket.io-1.2.0.js"></script-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+
+<script>
+var socket;
+var isTurn = [false, false];
+var myID, otherID;  // either 0 or 1
+var meshes = [];
+var Rs = [60, 60*0.8];
+var camera, scene, renderer;
+var cameraB, cameraB2, rendererB, rendererB2;
+var cameraRTT, cameraRTT2;
+var renderTarget, renderTarget2;
+var thetas = [0, 0], omegas = [0, 0];
+var sceneRTT, sceneRTT2
+var clock = new THREE.Clock();
+//var step = false;
+var keyboard;
+var fuel = 200;
+var engines = [true, true];
+
+/*$('#stepB').click ( function() {
+  socket.emit ('toggle', myID);	
+});*/
+$("#stepB").on('mousedown', function(e) {
+  console.log('mouse down')
+  socket.emit ('toggle', myID);
+  $(this).css("background-color", "yellow");
+}).on('mouseup', function(e) {
+  console.log('mouse up')
+  socket.emit ('toggle', myID);
+  $(this).css("background-color", "white");
+});
+    
+$(function () {
+
+	socket = io();
+		
+	socket.on ('id_set', function(msg) {
+		console.log ('i am ' + msg);
+
+		// setting myID in this client
+		myID = msg;
+		if (myID === 0)
+		  otherID = 1;
+		else
+		  otherID = 0;  
+
+		if (myID === 0) {
+			$('#hud').text ('I am client 0')
+		} else {
+			$('#hud').text ('I am client 1')
+		}
+	
+	});
+
+	socket.on ('update_status', function (status) {
+		//console.log (status)
+		for (let i = 0; i < status.length; i++) {
+			meshes[status[i].id].material.visible = true;   
+			isTurn[status[i].id] = status[i].turn;
+		}
+		
+	
+	});
+	
+	socket.on ('angle_now', function (data) {
+		//console.log (data.angle + 'of ' + otherID);
+		meshes[otherID].rotation.y = data.angle;
+		meshes[otherID].position.copy( data.pos);
+	});
+
+});
+
+init();
+animate();
+
+setInterval (
+   function () {
+	//console.log (myID);
+	if (myID === undefined) return;
+	//console.log ('in sync ' + myID);
+	let data = {id: myID, angle: meshes[myID].rotation.y, pos: meshes[myID].position};
+	socket.emit ('angle_now', data);
+	}, 
+2000);
+
+function init() {
+
+	var ww = $("#container").innerWidth();
+  var hh = $("#container").innerHeight();
+  var fv = document.getElementById('frontView')
+  renderer = new THREE.WebGLRenderer({
+    canvas: fv
+  });
+  renderer.setSize(ww, hh);
+  renderer.setClearColor(0x888888);
+
+  var wwB = $('#containerL').innerWidth();
+  var hhB = $('#containerL').innerHeight();
+  var mv = document.getElementById('mirrorView');
+  rendererB = new THREE.WebGLRenderer({
+    canvas: mv
+  });
+  rendererB.setSize(wwB, hhB);
+  rendererB.setClearColor(0x888888);
+  
+  renderTarget = new THREE.WebGLRenderTarget(
+    1024, 1024, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.NearestFilter,
+      format: THREE.RGBFormat
+    }
+  );
+  
+  var wwB2 = $('#containerR').innerWidth();
+  var hhB2 = $('#containerR').innerHeight();
+  var mv2 = document.getElementById('mirrorView2');
+  rendererB2 = new THREE.WebGLRenderer({
+    canvas: mv2
+  });
+  rendererB2.setSize(wwB, hhB);
+  rendererB2.setClearColor(0x888888);
+  
+  renderTarget2 = new THREE.WebGLRenderTarget(
+    1024, 1024, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.NearestFilter,
+      format: THREE.RGBFormat
+    }
+  );
+  
+  ////////////////////////////////////////////////
+
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(90, ww / hh, 1, 1000);
+  camera.position.z = 300;
+
+  cameraB = new THREE.PerspectiveCamera(90, wwB / hhB, 1, 1000);
+  cameraB2 = new THREE.PerspectiveCamera(90, wwB / hhB, 1, 1000);
+  
+
+  sceneRTT = new THREE.Scene();
+  cameraRTT = new THREE.OrthographicCamera (-10,10,10,-10, 0,20);
+  plane = new THREE.Mesh (new THREE.PlaneGeometry(20,20),
+  new THREE.MeshBasicMaterial({map:renderTarget.texture, side:THREE.DoubleSide}));
+  sceneRTT.add (plane);
+  plane.rotation.y = Math.PI;
+  
+  sceneRTT2 = new THREE.Scene();
+  cameraRTT2 = new THREE.OrthographicCamera (-10,10,10,-10, 0,20);
+  plane2 = new THREE.Mesh (new THREE.PlaneGeometry(20,20),
+  new THREE.MeshBasicMaterial({map:renderTarget2.texture, side:THREE.DoubleSide}));
+  sceneRTT2.add (plane2);
+  plane2.rotation.y = Math.PI;
+	/////////////////
+  var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+  scene.add(gridXZ);
+
+  let light = new THREE.PointLight(0xffffff);
+  light.position.set(100, 300, 200);
+  scene.add(light);
+
+  let controls = new THREE.OrbitControls(camera, renderer.domElement);
+  //window.addEventListener('resize', onWindowResize, false);
+
+  let geometry = new THREE.Geometry();
+  for (let i = 0, alpha = 0; i <= 60; i++) {
+    alpha += Math.PI * 2 / 60;
+    geometry.vertices.push(new THREE.Vector3(Rs[0] * Math.cos(alpha), 0, -Rs[0] * Math.sin(alpha)));
+  }
+  var border = new THREE.Line(geometry, new THREE.LineBasicMaterial({
+    color: 0xffff00
+  }));
+  scene.add(border);
+
+  let geometry2 = new THREE.Geometry();
+  for (let i = 0, alpha = 0; i <= 60; i++) {
+    alpha += Math.PI * 2 / 60;
+    geometry2.vertices.push(new THREE.Vector3(Rs[1] * Math.cos(alpha), 0, -Rs[1] * Math.sin(alpha)));
+  }
+  var border2 = new THREE.Line(geometry2, new THREE.LineDashedMaterial({
+    color: 0x00ffff,
+    dashSize: 20,
+    gapSize: 20
+  }));
+  scene.add(border2);
+  border2.computeLineDistances();
+
+  ////////////////////
+  meshes[0] = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 10), new THREE.MeshLambertMaterial({
+    color: 'yellow'
+  }));
+  scene.add(meshes[0])
+  meshes[1] = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 10), new THREE.MeshLambertMaterial({
+    color: 'green'
+  }));
+  scene.add(meshes[1])
+  ///////////////////////
+
+  // keyboard = new KeyboardState();
+    
+    meshes[0].material.visible = false
+    meshes[1].material.visible = false
+	
+}
+
+function animate() {
+	dt = clock.getDelta();
+	if (engines[myID]) {
+		thetas[myID] += omegas[myID] * dt;
+		//theta += 0.01;
+		meshes[myID].position.set(Rs[myID] * Math.cos(thetas[myID]), 0, -Rs[myID] * Math.sin(thetas[myID]));
+		meshes[myID].rotation.y = thetas[myID]
+
+		cameraB.position.set(0.9 * Rs[myID] * Math.cos(thetas[myID] + 0.1), 5, -0.9 * Rs[myID] * Math.sin(thetas[myID] + 0.1));
+
+		cameraB.lookAt(0.9 * Rs[myID] * Math.cos(thetas[myID] - 0.21), 0, -0.9 * Rs[myID] * Math.sin(thetas[myID] - 0.21))
+
+		cameraB2.position.set(1.1 * Rs[myID] * Math.cos(thetas[myID] + 0.1), 5, -1.1 * Rs[myID] * Math.sin(thetas[myID] + 0.1));
+
+		cameraB2.lookAt(1.1 * Rs[myID] * Math.cos(thetas[myID] - 0.21), 0, -1.1 * Rs[myID] * Math.sin(thetas[myID] - 0.21))
+
+		camera.position.set(Rs[myID] * Math.cos(thetas[myID] + 0.03), 5, -Rs[myID] * Math.sin(thetas[myID] + 0.03));
+		camera.lookAt(Rs[myID] * Math.cos(thetas[myID]+0.21),0,-Rs[myID] * Math.sin(thetas[myID]+0.21))
+
+		if (isTurn[myID]) {
+		  omegas[myID] += 0.1;
+		  fuel -= 0.3;
+		  if (omegas[myID] > 4) omegas[myID] = 4;
+		} else {
+		  fuel -= 0.03;
+		  omegas[myID] -= 0.02;
+		  if (omegas[myID] < 0) omegas[myID] = 0;
+		}
+		if(engines[otherID]){
+			thetas[otherID] += omegas[otherID] * dt;
+			meshes[otherID].position.set(Rs[otherID] * Math.cos(thetas[otherID] - 0.63), 0, -Rs[otherID] * Math.sin(thetas[otherID] - 0.63));
+			meshes[otherID].rotation.y = thetas[otherID] - 0.63;
+			if (isTurn[otherID]) {
+			  omegas[otherID] += 0.1;
+			  fuel -= 0.3;
+			  if (omegas[otherID] > 4) omegas[otherID] = 4;
+			} else {
+			  fuel -= 0.03;
+			  omegas[otherID] -= 0.02;
+			  if (omegas[otherID] < 0) omegas[otherID] = 0;
+			}
+		}
+	}
+	/*if (engines[1]) {
+		console.log("P2")
+		thetas[1] += omegas[1] * dt;
+		meshes[1].position.set(Rs[1] * Math.cos(thetas[1] - 0.63), 0, -Rs[1] * Math.sin(thetas[1] - 0.63));
+		meshes[1].rotation.y = thetas[1] - 0.63;
+		if (isTurn[1]) {
+		  omegas[1] += 0.1;
+		  fuel -= 0.3;
+		  if (omegas[1] > 4) omegas[1] = 4;
+		} else {
+		  fuel -= 0.03;
+		  omegas[1] -= 0.02;
+		  if (omegas[1] < 0) omegas[1] = 0;
+		}
+	}*/
+
+	if (fuel < 0) {
+	engines[myID] = false;
+	fuel = 0;
+	}
+	$('#fuel').text('fuel : ' + fuel.toFixed(2));
+	if(myID == 0)
+		$('#speed').text('Speed : ' + omegas[0].toFixed(2));
+	else
+		$('#speed').text('Speed : ' + omegas[1].toFixed(2));
+	
+	
+	requestAnimationFrame(animate);
+	render();
+}
+function render() {
+    renderer.render(scene, camera);
+	rendererB.setRenderTarget (renderTarget);
+	rendererB.render (scene, cameraB); 
+    rendererB.setRenderTarget (null);
+  
+	rendererB.render(sceneRTT, cameraRTT);
+
+	rendererB2.setRenderTarget (renderTarget2);
+	rendererB2.render (scene, cameraB2); 
+	rendererB2.setRenderTarget (null);
+  
+  rendererB2.render(sceneRTT2, cameraRTT2);
+}
+
+
+
+</script>
+</body>
+</html>
