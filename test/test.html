@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+
+
+</style>
+</head>
+
+<body>
+<input type="button" id="ch" value="camera">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+<script>
+var index = 0;
+function unitize (object, targetSize) {
+
+	// find bounding box of 'object'
+	var box3 = new THREE.Box3();
+	box3.setFromObject (object);
+	var size = new THREE.Vector3();
+	size.subVectors (box3.max, box3.min);
+	var center = new THREE.Vector3();
+	center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
+
+	console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
+	console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
+
+	// uniform scaling according to objSize
+	var objSize = Math.max (size.x, size.y, size.z);
+	var scaleSet = targetSize/objSize;
+
+	var theObject =  new THREE.Object3D();
+	theObject.add (object);
+	object.scale.set (scaleSet, scaleSet, scaleSet);
+	object.position.set (-center.x*scaleSet, -center.y*scaleSet, -center.z*scaleSet);
+
+	return theObject;
+
+}
+function readModel (sceneAdd, modelName, targetSize = 40) {
+  var onProgress = function(xhr) {
+    if (xhr.lengthComputable) {
+      var percentComplete = xhr.loaded / xhr.total * 100;
+      console.log(Math.round(percentComplete, 2) + '% downloaded');
+    }
+  };
+  var onError = function(xhr) {};
+  var mtlLoader = new THREE.MTLLoader();
+  mtlLoader.setPath('models/');
+  mtlLoader.load(modelName+'.mtl', function(materials) {
+    materials.preload();
+    var objLoader = new THREE.OBJLoader();
+    objLoader.setMaterials(materials);
+    objLoader.setPath('models/');
+    objLoader.load(modelName+'.obj', function(object) {
+
+		let theObject =  unitize (object, targetSize);
+		//theObject.add ( new THREE.BoxHelper (theObject) );
+		theObject.name = 'OBJ' + index;
+    index++;
+		sceneAdd.add (theObject);
+
+    }, onProgress, onError);
+  });
+}
+
+var sceneRTT
+var camera, scene, renderer;
+var rtCamera, rtScene;
+var renderTarget;
+var viewCamera
+var portal, angle = 0.5, turn = 1
+var cameraCh = true
+$('#ch').click(function(){
+  cameraCh = !cameraCh
+  console.log(cameraCh)
+  if(cameraCh) $(this).val("camera")
+  else $(this).val("viewCamera")
+})
+
+init();
+animate();
+
+function init(){
+
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x888888);
+  document.body.appendChild(renderer.domElement);
+
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.y = 200;
+  camera.position.z = 200;
+
+  viewCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+
+  var light = new THREE.AmbientLight(0xffffff);
+  scene.add(light);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+  ///////////////////
+  rtScene = new THREE.Scene();
+  rtCamera = new THREE.PerspectiveCamera(60, 1, 0.5, 2000);
+  rtCamera.position.z = 50;
+  rtCamera.position.y = 10;
+
+  helper = new THREE.CameraHelper(viewCamera);
+  //scene.add(helper);
+
+  var light2 = new THREE.AmbientLight(0xffffff);
+  rtScene.add(light2);
+
+  renderTarget = new THREE.WebGLRenderTarget(
+    1024, 1024, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.NearestFilter
+    });
+  ///////////////////
+  portal = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshPhongMaterial({
+    map: renderTarget.texture
+  }));
+  portal.position.y = 50;
+  portal.position.z = -50;
+  scene.add(portal);
+
+  var gridXY = new THREE.GridHelper(200, 20, 'red', 'white');
+  scene.add(gridXY);
+
+  readModel(rtScene, 'Astronaut');
+  readModel(scene, 'model');
+
+}
+
+function animate(){
+
+  if (angle > 2.8 || angle < 0.5)
+    turn *= -1;
+
+  angle += 0.01 * turn;
+  var am = rtScene.getObjectByName('OBJ0');
+  if(am != undefined){
+    am.position.set(0, 20, -20)
+  }
+  var vc = scene.getObjectByName('OBJ1');
+  if (vc != undefined) {
+    vc.rotation.y = Math.PI;
+    //viewCamera.lookAt(portal.position);
+    viewCamera.position.copy(vc.position.add(new THREE.Vector3(0, 10, -20)));
+    vc.position.set(-40 * Math.cos(angle), 50, 40 * Math.sin(angle));
+
+    rtCamera.position.set(viewCamera.position.x, 0, viewCamera.position.y);
+    rtCamera.quaternion.copy(portal.quaternion);
+
+    let portalHalfWidth = 50;
+    let portalHalfHeight = 50;
+    let portalPosition = new THREE.Vector3().copy(portal.position);
+    rtCamera.updateMatrixWorld();
+    rtCamera.worldToLocal(portalPosition);
+
+    let left = portalPosition.x - portalHalfWidth;
+    let right = portalPosition.x + portalHalfWidth;
+    let top = portalPosition.y + portalHalfHeight;
+    let bottom = portalPosition.y - portalHalfHeight;
+
+    const near = 0.01;
+    const distance = Math.abs(viewCamera.position.z - portalPosition.z);
+    const scale = near / distance;
+    left *= scale;
+    right *= scale;
+    top *= scale;
+    bottom *= scale;
+
+    rtCamera.projectionMatrix = (new THREE.Matrix4()).makePerspective(left, right, top, bottom, near, 1000);
+
+
+  }
+  requestAnimationFrame(animate);
+  render();
+}
+
+function render(){
+  renderer.setRenderTarget(renderTarget)
+  renderer.render(rtScene, rtCamera)
+  renderer.setRenderTarget(null)
+  if(cameraCh)
+    renderer.render(scene, camera);
+  else
+    renderer.render(scene, viewCamera);
+
+}
+
+</script>
+</body>
+
+</html>
