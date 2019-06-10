@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<style>
+
+
+</style>
+</head>
+
+<body> 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+<script>
+var angle = 0.5;
+var turn = 1
+var index = 0
+var renderer, scene, camera
+var SCREEN_WIDTH = window.innerWidth;
+var SCREEN_HEIGHT = window.innerHeight;
+var scaling = 2560 / 64.62; //monitor size
+
+var perspectiveParams = {
+	x: 0,
+	y: 5,
+	z: 55,
+	fixedX: 0,
+	fixedY: 0,
+	fixedZ: 0,
+	lookX: 0,
+	lookY: 0,
+	lookZ: 0
+};
+
+function onParamsChange() {
+	var x = perspectiveParams.x;
+	var y = perspectiveParams.y;
+	var z = perspectiveParams.z;
+	var fixedX = perspectiveParams.fixedX;
+	var fixedY = perspectiveParams.fixedY;
+	var fixedZ = perspectiveParams.fixedZ;
+	var screenHeight_cms = perspectiveParams.screenHeight_cms;
+
+	var newLookat = new THREE.Vector3(perspectiveParams.lookX, perspectiveParams.lookY, perspectiveParams.lookZ);
+
+	var xOffset = x > 0 ? 0 : -x * 2 * scaling;
+	var yOffset = y < 0 ? 0 : y * 2 * scaling;
+	camera.setViewOffset(SCREEN_WIDTH + Math.abs(x * 2 * scaling), SCREEN_HEIGHT + Math.abs(y * 2 * scaling), xOffset, yOffset, SCREEN_WIDTH, SCREEN_HEIGHT);
+	
+	camera.position.x = fixedX + (x * scaling );
+	camera.position.y = fixedY + (y * scaling );
+	camera.position.z = fixedZ + (z * scaling );
+	
+	// update lookAt?
+	// camera.lookAt(newLookat);
+
+	// when changing height of window, we need to change field of view
+	camera.fov = Math.atan((SCREEN_HEIGHT/2 + Math.abs(y * scaling ))/(Math.abs(z*scaling)))*360/Math.PI;
+	//debugger;
+	
+	// camera.updateMatrixWorld();
+	camera.updateProjectionMatrix();
+}
+
+function unitize (object, targetSize) {
+
+	// find bounding box of 'object'
+	var box3 = new THREE.Box3();
+	box3.setFromObject (object);
+	var size = new THREE.Vector3();
+	size.subVectors (box3.max, box3.min);
+	var center = new THREE.Vector3();
+	center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
+
+	console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
+	console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
+
+	// uniform scaling according to objSize
+	var objSize = Math.max (size.x, size.y, size.z);
+	var scaleSet = targetSize/objSize;
+
+	var theObject =  new THREE.Object3D();
+	theObject.add (object);
+	object.scale.set (scaleSet, scaleSet, scaleSet);
+	object.position.set (-center.x*scaleSet, -center.y*scaleSet, -center.z*scaleSet);
+
+	return theObject;
+
+}
+function readModel (sceneAdd, modelName, targetSize = 300) {
+  var onProgress = function(xhr) {
+	if (xhr.lengthComputable) {
+	  var percentComplete = xhr.loaded / xhr.total * 100;
+	  console.log(Math.round(percentComplete, 2) + '% downloaded');
+	}
+  };
+  var onError = function(xhr) {};
+  var mtlLoader = new THREE.MTLLoader();
+  mtlLoader.setPath('models/');
+  mtlLoader.load(modelName+'.mtl', function(materials) {
+	materials.preload();
+	var objLoader = new THREE.OBJLoader();
+	objLoader.setMaterials(materials);
+	objLoader.setPath('models/');
+	objLoader.load(modelName+'.obj', function(object) {
+
+		let theObject =  unitize (object, targetSize);
+		//theObject.add ( new THREE.BoxHelper (theObject) );
+		theObject.name = 'OBJ' + index;
+		index++;
+		sceneAdd.add (theObject);
+
+	}, onProgress, onError);
+  });
+}
+
+init();
+animate();
+
+function init(){
+	renderer = new THREE.WebGLRenderer({
+		antialias : true
+	});
+	renderer.setClearColor(new THREE.Color('lightgrey'), 1)
+	renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+	document.body.appendChild( renderer.domElement );
+	
+	scene = new THREE.Scene();
+	camera = new THREE.PerspectiveCamera( 23, window.innerWidth / window.innerHeight, 1, 100000 );
+	var fixedPosition = new THREE.Vector3(0, 0, 0);
+	camera.position = fixedPosition;
+	camera.lookAt(new THREE.Vector3(0,0,0));
+	scene.add( camera );
+	
+	var light = new THREE.AmbientLight( 0xffffff ); // soft white light
+	scene.add( light );
+	
+	////////////////////
+	//obj in scene
+	var geometry = new THREE.BoxGeometry( 50, 50, 50, 1, 1, 1 );
+	var material = new THREE.MeshNormalMaterial(); 
+
+	var box1 = new THREE.Mesh( geometry, material );
+	box1.position.x = 0;
+	box1.position.y = 25;
+	box1.position.z = -100;
+
+	var box2 = new THREE.Mesh( geometry, material );
+	box2.position.x = 200;
+	box2.position.y = 25;
+	box2.position.z = 100;
+
+	var box3 = new THREE.Mesh( geometry, material );
+	box3.position.x = -200;
+	box3.position.y = 25;
+	box3.position.z = 0;
+
+	var box4 = new THREE.Mesh( geometry, material );
+	box4.position.x = -300;
+	box4.position.y = 25;
+	box4.position.z = -500;
+
+	//scene.add( box1 );
+	scene.add( box2 );
+	scene.add( box3 );
+	scene.add( box4 );
+	readModel(scene, 'Astronaut');
+	
+	////////////////
+	//box scene
+	var ROOM_DEPTH = SCREEN_WIDTH;
+	/*var floorTexture = new THREE.ImageUtils.loadTexture( 'https://i.imgur.com/6qhKinH.jpg' );
+	//loader.setCrossOrigin('');
+	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
+	floorTexture.repeat.set( 10, 10 );*/
+	var loader = new THREE.TextureLoader();
+    loader.crossOrigin = ''
+    var texture = loader.load('https://i.imgur.com/6qhKinH.jpg');
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+	texture.repeat.set(10, 10)
+	var floorMaterial = new THREE.MeshBasicMaterial( { map: texture, side: THREE.DoubleSide } );
+	
+	var floorGeometry = new THREE.PlaneGeometry(SCREEN_WIDTH, ROOM_DEPTH, 1, 1);
+	var wallGeometry = new THREE.PlaneGeometry(SCREEN_HEIGHT, ROOM_DEPTH, 1, 1);
+	var backWallGeometry = new THREE.PlaneGeometry(SCREEN_WIDTH, SCREEN_HEIGHT, 1, 1);
+
+	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+	floor.position.y = -SCREEN_HEIGHT/2;
+	floor.position.z = -ROOM_DEPTH/2;
+	floor.rotation.x = Math.PI / 2;
+	scene.add(floor);
+
+	var leftWall = new THREE.Mesh(wallGeometry, floorMaterial);
+	leftWall.position.x = -SCREEN_WIDTH/2;
+	leftWall.position.z = -ROOM_DEPTH/2;
+	leftWall.rotation.z = Math.PI / 2;
+	leftWall.rotation.y = Math.PI / 2;
+	scene.add(leftWall);
+
+	var rightWall = new THREE.Mesh(wallGeometry, floorMaterial);
+	rightWall.position.x = SCREEN_WIDTH/2;
+	rightWall.position.z = -ROOM_DEPTH/2;
+	rightWall.rotation.z = -Math.PI / 2;
+	rightWall.rotation.y = Math.PI / 2;
+	scene.add(rightWall);
+
+	var ceiling = new THREE.Mesh(floorGeometry, floorMaterial);
+	ceiling.position.y = SCREEN_HEIGHT / 2;
+	ceiling.position.z = -ROOM_DEPTH/2;
+	ceiling.rotation.x = -Math.PI/2;
+	scene.add(ceiling);
+
+	var backWall = new THREE.Mesh(backWallGeometry, floorMaterial);
+	backWall.position.z = -ROOM_DEPTH/2;
+	scene.add(backWall);
+	
+	onParamsChange();
+	
+	//////////////
+	//resize
+	window.addEventListener('resize', function(){
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		camera.aspect	= window.innerWidth / window.innerHeight;
+		// camera.updateProjectionMatrix();
+		onParamsChange();
+	}, false)
+
+}
+
+
+function animate(){
+	var am = scene.getObjectByName('OBJ0');
+	if(am != undefined){
+		//console.log(am.position);
+		am.position.set(0, 25, -100)
+	}
+	if (angle > 2.8 || angle < 0.5)
+		turn *= -1;
+	angle += 0.01 * turn;
+	
+	perspectiveParams.x = -40 * Math.cos(angle);
+	perspectiveParams.z = 40 * Math.sin(angle);
+	onParamsChange();
+	requestAnimationFrame( animate );
+	renderer.render( scene, camera );
+
+}
+
+
+
+</script>
+</body>
+
+</html>

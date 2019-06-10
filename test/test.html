@@ -150,7 +150,8 @@ function animate(){
   angle += 0.01 * turn;
   var am = rtScene.getObjectByName('OBJ0');
   if(am != undefined){
-    am.position.set(0, 20, -20)
+    console.log(am.position);
+	am.position.set(0, 20, -20)
   }
   var vc = scene.getObjectByName('OBJ1');
   if (vc != undefined) {
