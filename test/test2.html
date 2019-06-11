@@ -144,33 +144,45 @@ function init(){
 	
 	////////////////////
 	//obj in scene
-	var geometry = new THREE.BoxGeometry( 50, 50, 50, 1, 1, 1 );
-	var material = new THREE.MeshNormalMaterial(); 
+	var geometry = new THREE.BoxGeometry( 10, 10, 1000, 1, 1, 1 );
+	var material = new THREE.MeshNormalMaterial();
+	
+	var geometryC = new THREE.CircleGeometry(35, 32);
+	var materialC = new THREE.MeshNormalMaterial();
 
 	var box1 = new THREE.Mesh( geometry, material );
 	box1.position.x = 0;
 	box1.position.y = 25;
 	box1.position.z = -100;
+	//var circle1 = new THREE.Mesh( geometryC, materialC );
+	//circle1.position.set()
 
 	var box2 = new THREE.Mesh( geometry, material );
 	box2.position.x = 200;
 	box2.position.y = 25;
 	box2.position.z = 100;
+	var circle2 = new THREE.Mesh( geometryC, materialC );
+	circle2.position.set(200, 25, 600)
 
 	var box3 = new THREE.Mesh( geometry, material );
 	box3.position.x = -200;
-	box3.position.y = 25;
+	box3.position.y = 15;
 	box3.position.z = 0;
+	var circle3 = new THREE.Mesh( geometryC, materialC );
+	circle3.position.set(-200, 15, 500)
 
 	var box4 = new THREE.Mesh( geometry, material );
 	box4.position.x = -300;
-	box4.position.y = 25;
+	box4.position.y = 50;
 	box4.position.z = -500;
+	var circle4 = new THREE.Mesh( geometryC, materialC );
+	circle4.position.set(-300, 50, 0)
 
 	//scene.add( box1 );
 	scene.add( box2 );
 	scene.add( box3 );
 	scene.add( box4 );
+	scene.add(circle2, circle3, circle4)
 	readModel(scene, 'Astronaut');
 	
 	////////////////
@@ -184,7 +196,7 @@ function init(){
     loader.crossOrigin = ''
     var texture = loader.load('https://i.imgur.com/6qhKinH.jpg');
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-	texture.repeat.set(10, 10)
+	texture.repeat.set(5, 5)
 	var floorMaterial = new THREE.MeshBasicMaterial( { map: texture, side: THREE.DoubleSide } );
 	
 	var floorGeometry = new THREE.PlaneGeometry(SCREEN_WIDTH, ROOM_DEPTH, 1, 1);
