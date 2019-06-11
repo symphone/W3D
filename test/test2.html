@@ -15,14 +15,17 @@
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
 <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
 <script>
 var angle = 0.5;
+var dis = 1
 var turn = 1
 var index = 0
 var renderer, scene, camera
 var SCREEN_WIDTH = window.innerWidth;
 var SCREEN_HEIGHT = window.innerHeight;
 var scaling = 2560 / 64.62; //monitor size
+var keyboard = new KeyboardState();
 
 var perspectiveParams = {
 	x: 0,
@@ -238,12 +241,25 @@ function animate(){
 		//console.log(am.position);
 		am.position.set(0, 25, -100)
 	}
-	if (angle > 2.8 || angle < 0.5)
+	/*if (angle > 2.8 || angle < 0.5)
 		turn *= -1;
-	angle += 0.01 * turn;
+	angle += 0.01 * turn;*/
+	if (keyboard.pressed("W")){
+		perspectiveParams.y += dis
+	}
+	if (keyboard.pressed("S")){
+		perspectiveParams.y -= dis
+	}
+	if (keyboard.pressed("D")){
+		perspectiveParams.x += dis
+	}
+	if (keyboard.pressed("A")){
+		perspectiveParams.x -= dis
+	}
+	keyboard.update();
 	
-	perspectiveParams.x = -40 * Math.cos(angle);
-	perspectiveParams.z = 40 * Math.sin(angle);
+	/*perspectiveParams.x = -40 * Math.cos(angle);
+	perspectiveParams.z = 40 * Math.sin(angle);*/
 	onParamsChange();
 	requestAnimationFrame( animate );
 	renderer.render( scene, camera );
