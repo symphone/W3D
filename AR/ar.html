@@ -28,6 +28,25 @@
   <script src="build/ar.js"></script>
   <script>THREEx.ArToolkitContext.baseURL = ''</script>
   <script type="text/javascript">
+  
+	class Button {
+		constructor (size, x, y){
+			this.size = size;
+			this.centerX = x;
+			this.centerY = y;
+		}
+		d1To (v) { // 1-norm
+			return Math.abs (v[0]-this.centerX) + Math.abs(v[1]-this.centerY);
+		}
+		d2To (v) { // 2-norm
+			return Math.sqrt ( (v[0]-this.centerX)*(v[0]-this.centerX) 
+					+ (v[1]-this.centerY)*(v[1]-this.centerY) );
+		}
+		dInfTo (v) { // inf-norm
+			return Math.max( Math.abs (v[0]-this.centerX), Math.abs(v[1]-this.centerY) )
+		}
+	}
+  
     var frame, scene, camera, renderer, light, controls;
     var arToolkitSource, arToolkitContext, markeHiro;
     var stats;
@@ -208,7 +227,7 @@
 			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
 		}	
 		
-		$('#ratio').text ('resize: width: ' + window.innerWidth + ' height: ' + window.innerHeight)
+		//$('#ratio').text ('resize: width: ' + window.innerWidth + ' height: ' + window.innerHeight)
 		
 		whRatio = window.innerWidth/window.innerHeight;
 		 halfW = halfH * whRatio;
@@ -261,7 +280,7 @@
 
 		// use 2D algorithm 	
 		let dist = button1.dInfTo ([halfW * ndcX, halfH * ndcY]);	
-		$('#touch').text ('Mouse-dist-Button: ' + dist.toFixed(2))
+		//$('#touch').text ('Mouse-dist-Button: ' + dist.toFixed(2))
 		
 		if (dist < button1.size/2) {
 			console.log ('picked')
