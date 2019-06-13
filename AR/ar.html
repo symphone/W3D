@@ -59,6 +59,7 @@
     var myActions = [],
       settings;
 	//HUD
+	var sceneHUD, cameraHUD
 	var whRatio, halfW, halfH;
 	var button, button1;
 
@@ -169,8 +170,9 @@
         function(mmd) {
           function loadEnd(_mmd) {
             mesh = _mmd.mesh;
-            mesh.scale.set(0.1, 0.1, 0.1);
+            //mesh.scale.set(0.1, 0.1, 0.1);
             meshs.push(mesh);
+			mesh.rotation.x = Math.PI/2
             markeHiro.add(mesh);
 
             helper.add(mesh, {
@@ -263,6 +265,10 @@
       renderer.render(scene, camera);
       helper.update(clock.getDelta());
       effect.render(scene, camera);
+	  
+	  //HUD
+	  button.material.visible = markerRoot.visible;
+	  renderer.render (sceneHUD, cameraHUD);
     }
 
     function addMarkeHiro(){
