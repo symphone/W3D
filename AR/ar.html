@@ -51,7 +51,7 @@
     var arToolkitSource, arToolkitContext, markeHiro;
     var stats;
     var helper, ikHelper, physicsHelper, effect;
-    var modelFile = 'models/kisaragi/アズレン如月改.pmx';
+    var modelFile = 'models/Rin/Rin.pmx';
     var vmdFiles = ['vmds/idle.vmd'];
     //var vpdFiles = ['vpds/idle.vpd'];
     var clock = new THREE.Clock();
@@ -90,6 +90,74 @@
       camera.position.z = 20;*/
       camera = new THREE.Camera();
 	    scene.add(camera);
+		
+		// for HUD scene
+		sceneHUD = new THREE.Scene();
+		
+		// eye-coordinate bounds
+		halfH = 10;
+		halfW = halfH * whRatio;
+		
+		cameraHUD = new THREE.OrthographicCamera (-halfW,halfW, halfH,-halfH, -10,10);
+
+
+		////////////////////////////////////////////////////
+		// create a button to toggle rotation
+		//
+		var buttonSize = halfH/3;
+		button = new THREE.Mesh (new THREE.PlaneGeometry(buttonSize, buttonSize), 
+				new THREE.MeshBasicMaterial({color:"yellow", transparent:true, opacity:0.8}));	
+		button1 = new Button (buttonSize, 0, -halfH/2);
+		button.position.set (button1.centerX, button1.centerY, 0);
+		sceneHUD.add (button);
+		
+		
+		///model
+
+      function onProgress(xhr) {
+        if (xhr.lengthComputable) {
+          var percentComplete = xhr.loaded / xhr.total * 100;
+          console.log(Math.round(percentComplete, 2) + '% downloaded');
+        }
+      };
+
+      function onError(xhr) {};
+
+      var loader = new THREE.MMDLoader();
+      console.log(modelFile);
+
+      helper = new THREE.MMDAnimationHelper({
+        afterglow: 2.0
+      });
+
+      loader.loadWithAnimation(modelFile,vmdFiles,
+        function(mmd) {
+          function loadEnd(_mmd) {
+            mesh = _mmd.mesh;
+            mesh.scale.set(0.05, 0.05, 0.05);
+            meshs.push(mesh);
+			mesh.rotation.x = -Math.PI/2
+            markeHiro.add(mesh);
+
+            helper.add(mesh, {
+              animation: _mmd.animation,
+              physics: true
+            });
+
+
+            ikHelper = helper.objects.get(mesh).ikSolver.createHelper();
+            ikHelper.visible = false;
+            scene.add(ikHelper);
+
+            physicsHelper = helper.objects.get(mesh).physics.createHelper();
+            physicsHelper.visible = false;
+            scene.add(physicsHelper);
+
+          };
+          setTimeout(loadEnd(mmd), 10);
+        },
+        onProgress, onError);
+		
 
       ////////////////////////////////////////////////////////////////////////////////
     	//          handle arToolkitSource
@@ -148,72 +216,7 @@
       markeHiro.add(light);
 
 
-      ///model
-
-      function onProgress(xhr) {
-        if (xhr.lengthComputable) {
-          var percentComplete = xhr.loaded / xhr.total * 100;
-          console.log(Math.round(percentComplete, 2) + '% downloaded');
-        }
-      };
-
-      function onError(xhr) {};
-
-      var loader = new THREE.MMDLoader();
-      console.log(modelFile);
-
-      helper = new THREE.MMDAnimationHelper({
-        afterglow: 2.0
-      });
-
-      loader.loadWithAnimation(modelFile,vmdFiles,
-        function(mmd) {
-          function loadEnd(_mmd) {
-            mesh = _mmd.mesh;
-            mesh.scale.set(0.05, 0.05, 0.05);
-            meshs.push(mesh);
-			mesh.rotation.x = -Math.PI/2
-            markeHiro.add(mesh);
-
-            helper.add(mesh, {
-              animation: _mmd.animation,
-              physics: true
-            });
-
-
-            ikHelper = helper.objects.get(mesh).ikSolver.createHelper();
-            ikHelper.visible = false;
-            scene.add(ikHelper);
-
-            physicsHelper = helper.objects.get(mesh).physics.createHelper();
-            physicsHelper.visible = false;
-            scene.add(physicsHelper);
-
-          };
-          setTimeout(loadEnd(mmd), 10);
-        },
-        onProgress, onError);
-
-		// for HUD scene
-		sceneHUD = new THREE.Scene();
-		
-		// eye-coordinate bounds
-		halfH = 10;
-		halfW = halfH * whRatio;
-		
-		cameraHUD = new THREE.OrthographicCamera (-halfW,halfW, halfH,-halfH, -10,10);
-
-
-		////////////////////////////////////////////////////
-		// create a button to toggle rotation
-		//
-		var buttonSize = halfH/3;
-		button = new THREE.Mesh (new THREE.PlaneGeometry(buttonSize, buttonSize), 
-				new THREE.MeshBasicMaterial({color:"yellow", transparent:true, opacity:0.8}));	
-		button1 = new Button (buttonSize, 0, -halfH/2);
-		button.position.set (button1.centerX, button1.centerY, 0);
-		sceneHUD.add (button);
-	  
+      
 	  
 		if (_iOSDevice)
 			window.addEventListener('touchstart', onTouchStart, false);
