@@ -4,13 +4,76 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AR</title>
+  <style type="text/css">
+    html {
+      overflow: hidden;
+    }
+    img{
+      margin:2px;
+      display: inline-block;
+      width: 150px;
+      height: 150px;
+    }
+    @media (max-width:700px){
+        img{
+          margin:2px;
+          display: inline-block;
+          width: 50px;
+          height: 50px;
+        }
+    }
+    #mySlider {
+      top: 0;
+      right: -30vw;
+      width: 30vw;
+      position: fixed;
+      z-index: 9;
+    }
+    #myContent {
+      background-color: rgba(255, 255, 255, .6);
+      text-align: center;
+      padding-top: 10px;
+      border:5px #aaaaee solid;
+    }
+    #myTab {
+      position: absolute;
+      top: 20px;
+      left: -29px;
+      width: 24px;
+      background-color: rgba(255, 255, 255, .6);
+      color: #000000;
+      text-align: center;
+      padding: 9px 0;
+      border:5px #aaaaee solid;
+      -moz-border-radius-topleft: 10px;
+      -moz-border-radius-bottomleft: 10px;
+      -webkit-border-top-left-radius: 10px;
+      -webkit-border-bottom-left-radius: 10px;
+    }
+    #myTab span {
+      display: block;
+      height: 3vh;
+      padding: 1px 0;
+      line-height: 12px;
+      text-transform: uppercase;
+      font-size: 1.2em;
+    }
+  </style>
 </head>
 <body>
-<div style="float:right" id="myContent">
-  <button type="button" id="hb"><img src="https://i.imgur.com/EWz4ttH.jpg" style="height:40px; width:40px"></button>
-  <button type="button" id="d"><img src="https://i.imgur.com/OQi0E1e.jpg" style="height:40px; width:40px"></button>
-  <button type="button" id="c"><img src="https://i.imgur.com/UNsgykn.jpg" style="height:40px; width:40px"></button>
-</div>
+<div id="mySlider">
+    <div id="myTab">
+      <span>菜</span>
+      <span>單</span>
+      <span>一</span>
+      <span>覽</span>
+    </div>
+    <div id="myContent">
+      <img id="pic0" src="https://i.imgur.com/EWz4ttH.jpg"  title="Hamburger">
+      <img id="pic1" src="https://i.imgur.com/OQi0E1e.jpg"  title="Donitsi">
+      <img id="pic2" src="https://i.imgur.com/UNsgykn.jpg" title="cake">
+    </div>
+  </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
   <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -25,32 +88,23 @@
     var arToolkitSource, arToolkitContext, markeHiro;
     var stats
     var models = ['Hamburger', 'Donitsi', 'cake'], ready = false;
-	var cur = 0;
-	$('#foodB').click(function(){
-		console.log("food")
-	})
-	$('#hb').click(function(){
-		console.log("hamburger")
-		let selectedObject = markeHiro.getObjectByName(models[cur]);
-		markeHiro.remove(selectedObject);
-		cur = 0;
-		readModel(models[cur]);
-	});
-	$('#d').click(function(){
-		console.log("dontist")
-		let selectedObject = markeHiro.getObjectByName(models[cur]);
-		markeHiro.remove(selectedObject);
-		cur = 1;
-		readModel(models[cur]);
-	});
-	$('#c').click(function(){
-		console.log("cake")
-		let selectedObject = markeHiro.getObjectByName(models[cur]);
-		markeHiro.remove(selectedObject);
-		cur = 2;
-		readModel(models[cur]);
-	});
-	/*$(function(){
+	var mySelector = 0;
+	$(function(){
+       ////側邊滑動視窗
+       let w = $("#myContent").width() + 10; //width + border
+       $('#myContent').css('height', ($(window).height() - 20) + 'px'); //將區塊自動撐滿畫面高度
+       $("#myTab").click(function() { //滑鼠點擊時
+         if ($("#mySlider").css('right') == '-' + w + 'px') {
+           $("#mySlider").animate({
+             right: '0px'
+           }, 600, 'swing');
+         }
+         else{
+           $("#mySlider").animate({
+             right: '-' + w + 'px'
+           }, 600, 'swing');
+         }
+       });
         ////切換model
         for(let i=0;i<models.length;i++){
           let pic = '#pic' + i;
@@ -64,12 +118,11 @@
              };
            });
          };
-    });*/
+    });
 	
     init();
     animate();
     function init() {
-		$('#myContent').css('height', ($(window).height() - 20) + 'px');
       renderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true
