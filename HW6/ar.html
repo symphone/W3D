@@ -4,16 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AR</title>
-  <style type="text/css">
-    
-  </style>
 </head>
 <body>
-  <div id="foodB" style="float:right;"> 
-  <button type="button" id="hb"><img src="https://i.imgur.com/EWz4ttH.jpg"  title="Hamburger" style="height:20px; width:20px"></button>
-  <button type="button" id="d"><img src="https://i.imgur.com/OQi0E1e.jpg" title="Hot dog" style="height:20px; width:20px"></button>
-  <button type="button" id="c"><img src="https://i.imgur.com/UNsgykn.jpg"  title="French fries" style="height:20px; width:20px"></button>
-  </div>
+<div style="float:right">
+  <button type="button" id="hb"><img src="https://i.imgur.com/EWz4ttH.jpg" style="height:20px; width:20px"></button>
+  <button type="button" id="d"><img src="https://i.imgur.com/OQi0E1e.jpg" style="height:20px; width:20px"></button>
+  <button type="button" id="c"><img src="https://i.imgur.com/UNsgykn.jpg" style="height:20px; width:20px"></button>
+</div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
   <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -78,7 +75,7 @@
       });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setClearColor(new THREE.Color('lightgrey'), 0);
-      renderer.domElement.style.position = 'absolute'
+      //renderer.domElement.style.position = 'absolute'
     	renderer.domElement.style.top = '0px'
     	renderer.domElement.style.left = '0px'
       document.body.appendChild(renderer.domElement);
