@@ -160,7 +160,7 @@
       light = new THREE.DirectionalLight(0xffffff);
       light.position.set(1, 10, 0);
       markeHiro.add(light);
-      let light2 = new THREE.AmbientLight( 0x404040 );
+      let light2 = new THREE.AmbientLight( 0xffffff );
       markeHiro.add( light2 );
       let plane = new THREE.Mesh( new THREE.CircleGeometry(0.7, 20), new THREE.MeshPhongMaterial({color:'#bababa'}) );
       plane.rotation.x = -Math.PI/2;
@@ -174,8 +174,10 @@
       requestAnimationFrame(animate);
       if(arToolkitSource.ready === false) return;
       arToolkitContext.update(arToolkitSource.domElement);
-      if(ready)
+      if(ready){
+	    frame.rotation.x = -Math.PI/2;
         frame.rotation.y += 0.01;
+	  }
       render();
     }
     function render() {
