@@ -62,11 +62,10 @@
 </head>
 <body>
     <div id="myContent">
-      <button type="button" id="hb"><img src="../images/Hamburger.jpg"  title="Hamburger"></button>
+	  <button type="button" id="hb"><img src="../images/Hamburger.jpg"  title="Hamburger"></button>
       <button type="button" id="d"><img src="../images/Donitsi.jpg" title="Hot dog"></button>
       <button type="button" id="c"><img src="../images/cake.jpg"  title="French fries"></button>
     </div>
-  </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
   <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -79,10 +78,10 @@
   <script type="text/javascript">
     var frame, scene, camera, renderer, light, controls;
     var arToolkitSource, arToolkitContext, markeHiro;
-    var stats, mySelector = 0;
+    var stats
     var models = ['Hamburger', 'Donitsi', 'cake'], ready = false;
 	var cur = 0;
-	$('#hb').click(function(){
+	/*$('#hb').click(function(){
 		let selectedObject = markeHiro.getObjectByName(models[cur]);
 		markeHiro.remove(selectedObject);
 		cur = 0;
@@ -99,7 +98,7 @@
 		markeHiro.remove(selectedObject);
 		cur = 2;
 		readModel(models[cur]);
-	});
+	});*/
 	/*$(function(){
         ////切換model
         for(let i=0;i<models.length;i++){
