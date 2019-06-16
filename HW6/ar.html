@@ -72,7 +72,6 @@
       <img id="pic0" src="../images/nb.jpg"  title="Hamburger">
       <img id="pic1" src="../images/hd.jpg" title="Hot dog">
       <img id="pic2" src="../images/ff.jpg"  title="French fries">
-      <img id="pic3" src="../images/p.jpg"  title="Pizza">
     </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
@@ -88,7 +87,7 @@
     var frame, scene, camera, renderer, light, controls;
     var arToolkitSource, arToolkitContext, markeHiro;
     var stats, mySelector = 0;
-    var models = ['Hamburger', 'hotdog', 'french fries', 'pizza'], ready = false;
+    var models = ['Hamburger', 'hotdog', 'french fries'], ready = false;
 	
 	$(function(){
        ////側邊滑動視窗
@@ -207,9 +206,6 @@
       if(arToolkitSource.ready === false) return;
       arToolkitContext.update(arToolkitSource.domElement);
       if(ready){
-		if(frame.name != pizza)
-			frame.rotation.x = -Math.PI/2;
-		frame.position.y = 1;
         frame.rotation.y += 0.01;
 	  }
       render();
