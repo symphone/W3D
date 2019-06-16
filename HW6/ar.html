@@ -190,7 +190,7 @@
       stats.domElement.style.top = '0px';
       document.body.appendChild(stats.domElement);
       light = new THREE.DirectionalLight(0xffffff);
-      light.position.set(1, 10, 0);
+      light.position.set(0, 10, 0);
       markeHiro.add(light);
       let light2 = new THREE.AmbientLight( 0xffffff );
       markeHiro.add( light2 );
@@ -207,8 +207,9 @@
       if(arToolkitSource.ready === false) return;
       arToolkitContext.update(arToolkitSource.domElement);
       if(ready){
-		/*if(frame.name != pizza)
-			frame.rotation.x = -Math.PI/2;*/
+		if(frame.name != pizza)
+			frame.rotation.x = -Math.PI/2;
+		frame.position.y = 1;
         frame.rotation.y += 0.01;
 	  }
       render();
