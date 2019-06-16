@@ -71,7 +71,7 @@ function unitize (object, targetSize) {
 	return theObject;
 
 }
-function readModel (sceneAdd, modelName, targetSize = 300) {
+function readModel (sceneAdd, modelName, targetSize = 1) {
   var onProgress = function(xhr) {
 	if (xhr.lengthComputable) {
 	  var percentComplete = xhr.loaded / xhr.total * 100;
