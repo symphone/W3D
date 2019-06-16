@@ -194,6 +194,9 @@
       markeHiro.add(light);
       let light2 = new THREE.AmbientLight( 0xffffff );
       markeHiro.add( light2 );
+	  let plane = new THREE.Mesh( new THREE.CircleGeometry(0.7, 20), new THREE.MeshPhongMaterial({color:'#bababa'}) );
+      plane.rotation.x = -Math.PI/2;
+      markeHiro.add(plane);
       /////Models
       readModel(models[mySelector]);
     }
