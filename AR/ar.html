@@ -65,16 +65,13 @@
     <div id="myTab">
       <span>菜</span>
       <span>單</span>
-      <span>一</span>
-      <span>覽</span>
     </div>
-    <!--div id="myContent">
-      <img id="pic0" src="../media/images/Hamburger.jpg"  title="Hamburger">
-      <img id="pic1" src="../media/images/cake.jpg" title="cake">
-      <img id="pic2" src="../media/images/pizza.jpg"  title="pizza">
-      <img id="pic3" src="../media/images/Donitsi.jpg"  title="Donitsi">
-      <img id="pic4" src="../media/images/pie.jpg"  title="pie">
-    </div-->
+    <div id="myContent">
+      <img id="pic0" src="nb.jpg"  title="Hamburger">
+      <img id="pic1" src="hd.jpg" title="Hot dog">
+      <img id="pic2" src="ff.jpg"  title="French fries">
+      <img id="pic3" src="p.jpg"  title="Pizza">
+    </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
@@ -89,37 +86,7 @@
     var frame, scene, camera, renderer, light, controls;
     var arToolkitSource, arToolkitContext, markeHiro;
     var stats, mySelector = 0;
-    var models = ['Astronaut'], ready = false;
-    /*$(function(){
-       ////側邊滑動視窗
-       let w = $("#myContent").width() + 10; //width + border
-       $('#myContent').css('height', ($(window).height() - 20) + 'px'); //將區塊自動撐滿畫面高度
-       $("#myTab").click(function() { //滑鼠點擊時
-         if ($("#mySlider").css('right') == '-' + w + 'px') {
-           $("#mySlider").animate({
-             right: '0px'
-           }, 600, 'swing');
-         }
-         else{
-           $("#mySlider").animate({
-             right: '-' + w + 'px'
-           }, 600, 'swing');
-         }
-       });
-        ////切換model
-        for(let i=0;i<models.length;i++){
-          let pic = '#pic' + i;
-           $(pic).click(function(){
-             if(mySelector != i){
-               ready = false;
-               let selectedObject = markeHiro.getObjectByName(models[mySelector]);
-               markeHiro.remove(selectedObject);
-               mySelector = i;
-               readModel(models[mySelector]);
-             };
-           });
-         };
-    });*/
+    var models = ['Hamburger', 'hotdog', 'french fries', 'pizza'], ready = false;
     init();
     animate();
     function init() {
