@@ -61,17 +61,10 @@
   </style>
 </head>
 <body>
-  <div id="mySlider">
-    <div id="myTab">
-      <span>菜</span>
-      <span>單</span>
-	  <span>一</span>
-	  <span>覽</span>
-    </div>
     <div id="myContent">
-      <img id="pic0" src="../images/Hamburger.jpg"  title="Hamburger">
-      <img id="pic1" src="../images/Donitsi.jpg" title="Hot dog">
-      <img id="pic2" src="../images/ff.jpg"  title="French fries">
+      <button type="button" id="hb"><img src="../images/Hamburger.jpg"  title="Hamburger"></button>
+      <button type="button" id="d"><img src="../images/Donitsi.jpg" title="Hot dog"></button>
+      <button type="button" id="c"><img src="../images/cake.jpg"  title="French fries"></button>
     </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
@@ -87,24 +80,27 @@
     var frame, scene, camera, renderer, light, controls;
     var arToolkitSource, arToolkitContext, markeHiro;
     var stats, mySelector = 0;
-    var models = ['Hamburger', 'Donitsi', 'french fries'], ready = false;
-	
-	$(function(){
-       ////側邊滑動視窗
-       let w = $("#myContent").width() + 10; //width + border
-       $('#myContent').css('height', ($(window).height() - 20) + 'px'); //將區塊自動撐滿畫面高度
-       $("#myTab").click(function() { //滑鼠點擊時
-         if ($("#mySlider").css('right') == '-' + w + 'px') {
-           $("#mySlider").animate({
-             right: '0px'
-           }, 600, 'swing');
-         }
-         else{
-           $("#mySlider").animate({
-             right: '-' + w + 'px'
-           }, 600, 'swing');
-         }
-       });
+    var models = ['Hamburger', 'Donitsi', 'cake'], ready = false;
+	var cur = 0;
+	$('#hb').click(function(){
+		let selectedObject = markeHiro.getObjectByName(models[cur]);
+		markeHiro.remove(selectedObject);
+		cur = 0;
+		readModel(models[cur]);
+	});
+	$('#d').click(function(){
+		let selectedObject = markeHiro.getObjectByName(models[cur]);
+		markeHiro.remove(selectedObject);
+		cur = 1;
+		readModel(models[cur]);
+	});
+	$('#c').click(function(){
+		let selectedObject = markeHiro.getObjectByName(models[cur]);
+		markeHiro.remove(selectedObject);
+		cur = 2;
+		readModel(models[cur]);
+	});
+	/*$(function(){
         ////切換model
         for(let i=0;i<models.length;i++){
           let pic = '#pic' + i;
@@ -118,7 +114,7 @@
              };
            });
          };
-    });
+    });*/
 	
     init();
     animate();
@@ -191,13 +187,13 @@
       light = new THREE.DirectionalLight(0xffffff);
       light.position.set(5, 10, 0);
       markeHiro.add(light);
-      let light2 = new THREE.AmbientLight( 0xffffff );
+      let light2 = new THREE.AmbientLight( 0x444444 );
       markeHiro.add( light2 );
 	  let plane = new THREE.Mesh( new THREE.CircleGeometry(0.7, 20), new THREE.MeshPhongMaterial({color:'#bababa'}) );
       plane.rotation.x = -Math.PI/2;
       markeHiro.add(plane);
       /////Models
-      readModel(models[mySelector]);
+      readModel(models[cur]);
     }
     function animate() {
       stats.begin();
