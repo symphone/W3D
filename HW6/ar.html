@@ -89,6 +89,38 @@
     var arToolkitSource, arToolkitContext, markeHiro;
     var stats, mySelector = 0;
     var models = ['Hamburger', 'hotdog', 'french fries', 'pizza'], ready = false;
+	
+	$(function(){
+       ////側邊滑動視窗
+       let w = $("#myContent").width() + 10; //width + border
+       $('#myContent').css('height', ($(window).height() - 20) + 'px'); //將區塊自動撐滿畫面高度
+       $("#myTab").click(function() { //滑鼠點擊時
+         if ($("#mySlider").css('right') == '-' + w + 'px') {
+           $("#mySlider").animate({
+             right: '0px'
+           }, 600, 'swing');
+         }
+         else{
+           $("#mySlider").animate({
+             right: '-' + w + 'px'
+           }, 600, 'swing');
+         }
+       });
+        ////切換model
+        for(let i=0;i<models.length;i++){
+          let pic = '#pic' + i;
+           $(pic).click(function(){
+             if(mySelector != i){
+               ready = false;
+               let selectedObject = markeHiro.getObjectByName(models[mySelector]);
+               markeHiro.remove(selectedObject);
+               mySelector = i;
+               readModel(models[mySelector]);
+             };
+           });
+         };
+    });
+	
     init();
     animate();
     function init() {
