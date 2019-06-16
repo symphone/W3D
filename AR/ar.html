@@ -1,389 +1,324 @@
+
 <!DOCTYPE html>
-<html >
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR</title>
-  <style>
-    html {
-      overflow: hidden;
-    }
-  </style>
-</head>
-<body>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
-  <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
-  
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
-<!--
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/libs/mmdparser.min.js"></script>
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/libs/ammo.js"></script>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<!-- three.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+<!-- ar.js -->
+<script src="build/ar.js"></script>
+<script>THREEx.ArToolkitContext.baseURL = '../'</script>
 
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/TGALoader.js"></script>
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MMDLoader.js"></script>
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/effects/OutlineEffect.js"></script>
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/animation/CCDIKSolver.js"></script>
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/animation/MMDPhysics.js"></script>
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/animation/MMDAnimationHelper.js"></script>
--->
+<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
+<div style='position:absolute;top:15vh;text-align:center;color:yellow;width:100%'>
+<p id='touch'></p>
+<p id='ratio'></p>
+</div>
+<script>
 
-  <!-- ar.js -->
-  <script src="build/ar.js"></script>
-  <script>THREEx.ArToolkitContext.baseURL = ''</script>
-  <script type="text/javascript">
-  
-	class Button {
-		constructor (size, x, y){
-			this.size = size;
-			this.centerX = x;
-			this.centerY = y;
-		}
-		d1To (v) { // 1-norm
-			return Math.abs (v[0]-this.centerX) + Math.abs(v[1]-this.centerY);
-		}
-		d2To (v) { // 2-norm
-			return Math.sqrt ( (v[0]-this.centerX)*(v[0]-this.centerX) 
-					+ (v[1]-this.centerY)*(v[1]-this.centerY) );
-		}
-		dInfTo (v) { // inf-norm
-			return Math.max( Math.abs (v[0]-this.centerX), Math.abs(v[1]-this.centerY) )
-		}
+class Button {
+	constructor (size, x, y){
+		this.size = size;
+		this.centerX = x;
+		this.centerY = y;
 	}
-  
-    var frame, scene, camera, renderer, light, controls;
-    var arToolkitSource, arToolkitContext, markeHiro;
-    var stats;
-    var helper, ikHelper, physicsHelper, effect;
-    var modelFile = 'models/miku2/初音ミクG型001(ノーマル).pmx';
-    var vmdFiles = ['vmds/idle.vmd'];
-    //var vpdFiles = ['vpds/idle.vpd'];
-    var clock = new THREE.Clock();
-    var meshs = [];
-    var myActions = [],
-      settings;
-	
-	var index = 0
-	//HUD
-	var sceneHUD, cameraHUD
-	var whRatio, halfW, halfH;
-	var button, button1;
-/*
-    Ammo().then(function(AmmoLib) {
-      Ammo = AmmoLib;
-      init();
-      animate();
-    });
-*/
-	init();
-    animate();
-
-    function init() {
-		let _iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
-
-      renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
-      });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setClearColor(new THREE.Color('lightgrey'), 0);
-      renderer.domElement.style.position = 'absolute'
-    	renderer.domElement.style.top = '0px'
-    	renderer.domElement.style.left = '0px'
-      document.body.appendChild(renderer.domElement);
-
-      scene = new THREE.Scene();
-
-    /*  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
-      camera.position.z = 20;*/
-      camera = new THREE.Camera();
-	    scene.add(camera);
-		
-		// for HUD scene
-		sceneHUD = new THREE.Scene();
-		
-		// eye-coordinate bounds
-		halfH = 10;
-		halfW = halfH * whRatio;
-		
-		cameraHUD = new THREE.OrthographicCamera (-halfW,halfW, halfH,-halfH, -10,10);
-
-
-		////////////////////////////////////////////////////
-		// create a button to toggle rotation
-		//
-		var buttonSize = halfH/3;
-		button = new THREE.Mesh (new THREE.PlaneGeometry(buttonSize, buttonSize), 
-				new THREE.MeshBasicMaterial({color:"yellow", transparent:true, opacity:0.8}));	
-		button1 = new Button (buttonSize, 0, -halfH/2);
-		button.position.set (button1.centerX, button1.centerY, 0);
-		sceneHUD.add (button);
-		
-		
-		///model
-/*
-      function onProgress(xhr) {
-        if (xhr.lengthComputable) {
-          var percentComplete = xhr.loaded / xhr.total * 100;
-          console.log(Math.round(percentComplete, 2) + '% downloaded');
-        }
-      };
-
-      function onError(xhr) {};
-
-      var loader = new THREE.MMDLoader();
-      console.log(modelFile);
-
-      helper = new THREE.MMDAnimationHelper({
-        afterglow: 2.0
-      });
-
-      loader.loadWithAnimation(modelFile,vmdFiles,
-        function(mmd) {
-          function loadEnd(_mmd) {
-            mesh = _mmd.mesh;
-            mesh.scale.set(0.05, 0.05, 0.05);
-            meshs.push(mesh);
-			mesh.rotation.x = -Math.PI/2
-            markeHiro.add(mesh);
-
-            helper.add(mesh, {
-              animation: _mmd.animation,
-              physics: true
-            });
-
-
-            ikHelper = helper.objects.get(mesh).ikSolver.createHelper();
-            ikHelper.visible = false;
-            scene.add(ikHelper);
-
-            physicsHelper = helper.objects.get(mesh).physics.createHelper();
-            physicsHelper.visible = false;
-            scene.add(physicsHelper);
-
-          };
-          setTimeout(loadEnd(mmd), 10);
-        },
-        onProgress, onError);
-		*/
-
-      ////////////////////////////////////////////////////////////////////////////////
-    	//          handle arToolkitSource
-    	////////////////////////////////////////////////////////////////////////////////
-    	arToolkitSource = new THREEx.ArToolkitSource({
-    		// to read from the webcam
-    		sourceType : 'webcam',
-
-    		// // to read from an image
-    		// sourceType : 'image',
-    		// sourceUrl : THREEx.ArToolkitContext.baseURL + 'data/images/img.jpg',
-    		// to read from a video
-    		// sourceType : 'video',
-    		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/videos/headtracking.mp4',
-    	})
-    	arToolkitSource.init(function onReady(){
-    		onResize()
-    	})
-
-    	// handle resize
-    	window.addEventListener('resize', function(){
-    		onResize()
-    	})
-    	////////////////////////////////////////////////////////////////////////////////
-    	//          initialize arToolkitContext
-    	////////////////////////////////////////////////////////////////////////////////
-
-      // create atToolkitContext
-    	arToolkitContext = new THREEx.ArToolkitContext({
-    		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + 'data/data/camera_para.dat',
-    		detectionMode: 'mono',
-        maxDetectionRate: 30,
-        canvasWidth:80*3,
-        canvasHeight: 60*3,
-    	})
-    	// initialize it
-    	arToolkitContext.init(function onCompleted(){
-    		// copy projection matrix to camera
-    		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
-    	})
-      markeHiro = addMarkeHiro();
-      scene.add(markeHiro);
-      ////////////////////////////////////////////////////////////////////////////////
-      stats = new Stats();
-      stats.showPanel(0);
-      stats.domElement.style.position = 'absolute';
-      stats.domElement.style.left = '0px';
-      stats.domElement.style.top = '0px';
-      document.body.appendChild(stats.domElement);
-    //  controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-      //effect = new THREE.OutlineEffect(renderer);
-
-      light = new THREE.DirectionalLight(0xffffff);
-      light.position.set(50, 100, 0);
-      markeHiro.add(light);
-
-		readModel(scene, 'model')
-      
-	  
-		if (_iOSDevice)
-			window.addEventListener('touchstart', onTouchStart, false);
-		else
-			window.addEventListener ('mousedown', onMouseDown, false);
-
-    }
-	
-	function onResize(){
-		arToolkitSource.onResize()	
-		arToolkitSource.copySizeTo(renderer.domElement)	
-		if( arToolkitContext.arController !== null ){
-			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
-		}	
-		
-		//$('#ratio').text ('resize: width: ' + window.innerWidth + ' height: ' + window.innerHeight)
-		
-		whRatio = window.innerWidth/window.innerHeight;
-		 halfW = halfH * whRatio;
-		cameraHUD.left = -halfW;
-		cameraHUD.right = halfW;
-		cameraHUD.top = halfH;
-		cameraHUD.bottom = -halfH;
-		//cameraHUD.updateProjectionMatrix();
-		// ideally, this is needed, 
-		// but commented out gives better result (in Chrome emulator)
-		
-		
-	/*	
-	  AR world resize: controlled by arToolKit
-	  camera.aspect = window.innerWidth / window.innerHeight;
-	  camera.updateProjectionMatrix();
-	*/  
-	  //renderer.setSize(window.innerWidth, window.innerHeight);
-			
+	d1To (v) { // 1-norm
+		return Math.abs (v[0]-this.centerX) + Math.abs(v[1]-this.centerY);
 	}
-
-    function animate() {
-      stats.begin();
-      stats.end();
-      requestAnimationFrame(animate);
-      if(arToolkitSource.ready === false) return;
-      arToolkitContext.update(arToolkitSource.domElement);
-	  console.log("HERE")
-      render();
-    }
-
-    function render() {
-      renderer.render(scene, camera);
-      helper.update(clock.getDelta());
-      effect.render(scene, camera);
-	  
-	  //HUD
-	  button.material.visible = markerRoot.visible;
-	  renderer.render (sceneHUD, cameraHUD);
-    }
-
-    function addMarkeHiro(){
-      let markerRoot = new THREE.Group();
-      var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
-    		type : 'pattern',
-    		patternUrl : THREEx.ArToolkitContext.baseURL + 'data/data/patt.hiro'
-    		// patternUrl : THREEx.ArToolkitContext.baseURL + 'data/data/patt.kanji'
-    	})
-
-      return markerRoot;
-    }
-	
-	function pickCompute (ndcX, ndcY) {
-
-		// use 2D algorithm 	
-		let dist = button1.dInfTo ([halfW * ndcX, halfH * ndcY]);	
-		//$('#touch').text ('Mouse-dist-Button: ' + dist.toFixed(2))
-		
-		if (dist < button1.size/2) {
-			console.log ('picked')
-			cubeSpin = !cubeSpin;
-		} else {
-			console.log ('no hit')
-		}
-
+	d2To (v) { // 2-norm
+		return Math.sqrt ( (v[0]-this.centerX)*(v[0]-this.centerX) 
+				+ (v[1]-this.centerY)*(v[1]-this.centerY) );
 	}
+	dInfTo (v) { // inf-norm
+		return Math.max( Math.abs (v[0]-this.centerX), Math.abs(v[1]-this.centerY) )
+	}
+}
 
-	function onMouseDown (event) {
-		console.log ('in mouse down')
-		event.preventDefault();
-		let ndcX = (event.clientX / window.innerWidth) * 2 - 1;
-		let ndcY = -(event.clientY / window.innerHeight) * 2 + 1;
+var renderer, stats;
+var scene, camera, sceneHUD, cameraHUD;
+var mesh, button, markerRoot, cubeSpin = false; 
+var arToolkitSource, arToolkitContext;
+/////////////
+var whRatio, halfW, halfH;
+var button1;
+var _iOSDevice;
+var index = 0;
 
-		pickCompute (ndcX, ndcY);		
+function unitize (object, targetSize) {
+
+	// find bounding box of 'object'
+	var box3 = new THREE.Box3();
+	box3.setFromObject (object);
+	var size = new THREE.Vector3();
+	size.subVectors (box3.max, box3.min);
+	var center = new THREE.Vector3();
+	center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
+
+	console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
+	console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
+
+	// uniform scaling according to objSize
+	var objSize = Math.max (size.x, size.y, size.z);
+	var scaleSet = targetSize/objSize;
+
+	var theObject =  new THREE.Object3D();
+	theObject.add (object);
+	object.scale.set (scaleSet, scaleSet, scaleSet);
+	object.position.set (-center.x*scaleSet, -center.y*scaleSet, -center.z*scaleSet);
+
+	return theObject;
+
+}
+function readModel (sceneAdd, modelName, targetSize = 300) {
+  var onProgress = function(xhr) {
+	if (xhr.lengthComputable) {
+	  var percentComplete = xhr.loaded / xhr.total * 100;
+	  console.log(Math.round(percentComplete, 2) + '% downloaded');
+	}
+  };
+  var onError = function(xhr) {};
+  var mtlLoader = new THREE.MTLLoader();
+  mtlLoader.setPath('models/');
+  mtlLoader.load(modelName+'.mtl', function(materials) {
+	materials.preload();
+	var objLoader = new THREE.OBJLoader();
+	objLoader.setMaterials(materials);
+	objLoader.setPath('models/');
+	objLoader.load(modelName+'.obj', function(object) {
+
+		let theObject =  unitize (object, targetSize);
+		//theObject.add ( new THREE.BoxHelper (theObject) );
+		theObject.name = 'OBJ' + index;
+		index++;
+		sceneAdd.add (theObject);
+
+	}, onProgress, onError);
+  });
+}
+
+
+init();
+animate();
+
+function init() {
+
+	// https://stackoverflow.com/questions/9038625/detect-if-device-is-ios?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+	let _iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
+
+	console.log ('iOS: ' + _iOSDevice)
+
+
+	renderer	= new THREE.WebGLRenderer({
+		// antialias	: true,
+		alpha: true
+	});
+	renderer.setClearColor(new THREE.Color('lightgrey'), 0)
+ 	//renderer.setPixelRatio( 1/2 );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.domElement.style.position = 'absolute'
+	renderer.domElement.style.top = '0px'
+	renderer.domElement.style.left = '0px'
+	document.body.appendChild( renderer.domElement );
+	
+	// width/height ratio
+	whRatio = window.innerWidth/window.innerHeight;
+
+
+	// for multi-pass rendering
+	renderer.autoClear = false;
+		
+	// init scene and camera
+	scene	= new THREE.Scene();
+	// Create a camera
+	camera = new THREE.Camera();
+	scene.add(camera);
+	
+	// for HUD scene
+	sceneHUD = new THREE.Scene();
+	
+	// eye-coordinate bounds
+	halfH = 10;
+	halfW = halfH * whRatio;
+	
+	cameraHUD = new THREE.OrthographicCamera (-halfW,halfW, halfH,-halfH, -10,10);
+
+
+	////////////////////////////////////////////////////
+	// create a button to toggle rotation
+	//
+	var buttonSize = halfH/3;
+	button = new THREE.Mesh (new THREE.PlaneGeometry(buttonSize, buttonSize), 
+			new THREE.MeshBasicMaterial({color:"yellow", transparent:true, opacity:0.8}));	
+	button1 = new Button (buttonSize, 0, -halfH/2);
+	button.position.set (button1.centerX, button1.centerY, 0);
+	sceneHUD.add (button);
+	
+	
+	////////////////////////////////////////////////////////////////////////////////
+	//          handle arToolkitSource
+	////////////////////////////////////////////////////////////////////////////////
+
+	arToolkitSource = new THREEx.ArToolkitSource({
+		// to read from the webcam 
+		sourceType : 'webcam',
+
+		// to read from an image
+		// sourceType : 'image',
+		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/images/img.jpg',		
+
+		// to read from a video
+		// sourceType : 'video',
+		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/videos/headtracking.mp4',		
+	})
+
+	arToolkitSource.init(function onReady(){
+		onResize()
+	})
+	
+	////////////////////////////////////////////////////////////////////////////////
+	//          initialize arToolkitContext
+	////////////////////////////////////////////////////////////////////////////////
+	
+
+	// create atToolkitContext
+	arToolkitContext = new THREEx.ArToolkitContext({
+		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
+		detectionMode: 'mono',
+		maxDetectionRate: 30,
+		canvasWidth: 80*3,
+		canvasHeight: 60*3,
+	})
+	// initialize it
+	arToolkitContext.init(function onCompleted(){
+		// copy projection matrix to camera
+		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
+	})
+	
+	////////////////////////////////////////////////////////////////////////////////
+	//          Create a ArMarkerControls
+	////////////////////////////////////////////////////////////////////////////////
+	
+	markerRoot = new THREE.Group
+	scene.add(markerRoot)
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+		type : 'pattern',
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
+		// patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji'
+	})
+
+	// obj in scene
+	readModel(scene, 'Astronaut');
+	
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		render the whole thing on the page
+	//////////////////////////////////////////////////////////////////////////////////
+	
+	stats = new Stats();
+	document.body.appendChild( stats.domElement );
+	
+
+	// handle resize: can be iPAD change orientation
+	window.addEventListener('resize', function(){
+		onResize()
+	})
+	
+	
+	if (_iOSDevice)
+    	window.addEventListener('touchstart', onTouchStart, false);
+	else
+		window.addEventListener ('mousedown', onMouseDown, false);
+
+}
+
+function animate() {
+	stats.update();
+	requestAnimationFrame (animate);
+	
+	if( arToolkitSource.ready === false )	return
+	arToolkitContext.update( arToolkitSource.domElement )
+
+	renderer.clear();
+	renderer.render (scene, camera);
+	button.material.visible = markerRoot.visible;
+	renderer.render (sceneHUD, cameraHUD);
+
+	var cam = scene.getObjectByName('OBJ0');
+	if(cam != undefined){
+		if (cubeSpin)
+			cam.rotation.x += 0.1
+	}
+	
+}
+	
+function onResize(){
+	arToolkitSource.onResize()	
+	arToolkitSource.copySizeTo(renderer.domElement)	
+	if( arToolkitContext.arController !== null ){
+		arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
 	}	
-
-	function onTouchStart (event) {
-		console.log ('in touch start')
-
-	   if (event.touches.length == 1) {
-			
-			event.preventDefault();
-			let ndcX = ( event.touches[0].pageX / window.innerWidth ) * 2 - 1;
-			let ndcY = - ( event.touches[0].pageY / window.innerHeight ) * 2 + 1;
+	
+	$('#ratio').text ('resize: width: ' + window.innerWidth + ' height: ' + window.innerHeight)
+	
+	whRatio = window.innerWidth/window.innerHeight;
+	 halfW = halfH * whRatio;
+	cameraHUD.left = -halfW;
+	cameraHUD.right = halfW;
+	cameraHUD.top = halfH;
+	cameraHUD.bottom = -halfH;
+	//cameraHUD.updateProjectionMatrix();
+	// ideally, this is needed, 
+	// but commented out gives better result (in Chrome emulator)
+	
+	
+/*	
+  AR world resize: controlled by arToolKit
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+*/  
+  //renderer.setSize(window.innerWidth, window.innerHeight);
 		
-			pickCompute (ndcX, ndcY);		
-			
-		}	
+}
+	
+function pickCompute (ndcX, ndcY) {
+
+	// use 2D algorithm 	
+	let dist = button1.dInfTo ([halfW * ndcX, halfH * ndcY]);	
+	$('#touch').text ('Mouse-dist-Button: ' + dist.toFixed(2))
+	
+	if (dist < button1.size/2) {
+		console.log ('picked')
+		cubeSpin = !cubeSpin;
+	} else {
+		console.log ('no hit')
 	}
+
+}
+
+function onMouseDown (event) {
+	console.log ('in mouse down')
+	event.preventDefault();
+	let ndcX = (event.clientX / window.innerWidth) * 2 - 1;
+	let ndcY = -(event.clientY / window.innerHeight) * 2 + 1;
+
+	pickCompute (ndcX, ndcY);		
+}	
+
+function onTouchStart (event) {
+	console.log ('in touch start')
+
+   if (event.touches.length == 1) {
+        
+		event.preventDefault();
+		let ndcX = ( event.touches[0].pageX / window.innerWidth ) * 2 - 1;
+		let ndcY = - ( event.touches[0].pageY / window.innerHeight ) * 2 + 1;
 	
-	function unitize (object, targetSize) {
+		pickCompute (ndcX, ndcY);		
+		
+	}	
+}	
 
-		// find bounding box of 'object'
-		var box3 = new THREE.Box3();
-		box3.setFromObject (object);
-		var size = new THREE.Vector3();
-		size.subVectors (box3.max, box3.min);
-		var center = new THREE.Vector3();
-		center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
-
-		console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
-		console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
-
-		// uniform scaling according to objSize
-		var objSize = Math.max (size.x, size.y, size.z);
-		var scaleSet = targetSize/objSize;
-
-		var theObject =  new THREE.Object3D();
-		theObject.add (object);
-		object.scale.set (scaleSet, scaleSet, scaleSet);
-		object.position.set (-center.x*scaleSet, -center.y*scaleSet, -center.z*scaleSet);
-
-		return theObject;
-
-		}
-		function readModel (sceneAdd, modelName, targetSize = 300) {
-		var onProgress = function(xhr) {
-		if (xhr.lengthComputable) {
-		  var percentComplete = xhr.loaded / xhr.total * 100;
-		  console.log(Math.round(percentComplete, 2) + '% downloaded');
-		}
-		};
-		var onError = function(xhr) {};
-		var mtlLoader = new THREE.MTLLoader();
-		mtlLoader.setPath('models/');
-		mtlLoader.load(modelName+'.mtl', function(materials) {
-		materials.preload();
-		var objLoader = new THREE.OBJLoader();
-		objLoader.setMaterials(materials);
-		objLoader.setPath('models/');
-		objLoader.load(modelName+'.obj', function(object) {
-
-			let theObject =  unitize (object, targetSize);
-			//theObject.add ( new THREE.BoxHelper (theObject) );
-			theObject.name = 'OBJ' + index;
-			index++;
-			sceneAdd.add (theObject);
-
-		}, onProgress, onError);
-		});
-		}
-	
-  </script>
+</script>
 </body>
-</html>
