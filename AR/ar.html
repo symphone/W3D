@@ -14,6 +14,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
   <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+  
+  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
 <!--
   <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/libs/mmdparser.min.js"></script>
   <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/libs/ammo.js"></script>
@@ -60,17 +63,21 @@
     var meshs = [];
     var myActions = [],
       settings;
+	
+	var index = 0
 	//HUD
 	var sceneHUD, cameraHUD
 	var whRatio, halfW, halfH;
 	var button, button1;
-
+/*
     Ammo().then(function(AmmoLib) {
       Ammo = AmmoLib;
       init();
       animate();
     });
-
+*/
+	init();
+    animate();
 
     function init() {
 		let _iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
@@ -212,7 +219,7 @@
       document.body.appendChild(stats.domElement);
     //  controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-      effect = new THREE.OutlineEffect(renderer);
+      //effect = new THREE.OutlineEffect(renderer);
 
       light = new THREE.DirectionalLight(0xffffff);
       light.position.set(50, 100, 0);
@@ -263,7 +270,7 @@
       requestAnimationFrame(animate);
       if(arToolkitSource.ready === false) return;
       arToolkitContext.update(arToolkitSource.domElement);
-
+	  console.log("HERE")
       render();
     }
 
