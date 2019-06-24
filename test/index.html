@@ -1,0 +1,43 @@
+<div class="container">
+    <div class="column-6">
+		<pre><canvas id="canvasGL" width="950" height="500"></canvas></pre>
+		<pre><script type="text/javascript" src="http://kode80.com/holowebgl/J3DIMath.js"></script></pre>
+		<pre><script type="text/javascript" src="http://kode80.com/holowebgl/WebGLController.js"></script></pre>
+		<pre><script type="text/javascript" src="http://kode80.com/holowebgl/SimpleMeshGL.js"></script></pre>
+		<pre><script id="vshader" type="x-shader/x-vertex">
+					uniform mat4 mvp;
+
+					attribute vec4 position;
+					attribute vec4 texCoord;
+					attribute vec4 color;
+
+					varying vec2 texCoordVar;
+					varying vec4 colorVar;
+					varying vec4 fogVar;
+
+					void main()
+					{
+						gl_Position = mvp * position;
+						texCoordVar = texCoord.st;
+
+						float fog = 1.0 - ((gl_Position.z - 100.0) / 120.0);
+						fogVar = clamp( vec4( fog, fog, fog, 1.0), 0.0, 1.0);
+						colorVar = color;
+					}
+		</script></pre>
+		<pre><script id="fshader" type="x-shader/x-fragment">
+					precision mediump float;
+
+					uniform sampler2D texture;
+
+					varying vec2 texCoordVar;
+					varying vec4 colorVar;
+					varying vec4 fogVar;
+
+					void main()
+					{
+						gl_FragColor = (texture2D( texture, texCoordVar) * colorVar) * fogVar;
+					}
+		</script></pre>
+		<pre><script type="text/javascript" src="http://kode80.com/holowebgl/main.js"></script></pre>
+	</div>
