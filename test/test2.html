@@ -183,7 +183,7 @@ function init(){
 	scene.add( box3 );
 	scene.add( box4 );
 	scene.add(circle2, circle3, circle4)
-	readModel(scene, 'french fries');
+	readModel(scene, 'Astronaut');
 	
 	////////////////
 	//box scene
@@ -251,7 +251,7 @@ function animate(){
 	var am = scene.getObjectByName('OBJ0');
 	if(am != undefined){
 		//console.log(am.position);
-		am.position.set(0, 25, -100)
+		am.position.set(0, -SCREEN_HEIGHT/2+150, -100)
 	}
 	/*if (angle > 2.8 || angle < 0.5)
 		turn *= -1;
