@@ -44,7 +44,7 @@ function unitize (object, targetSize) {
 	return theObject;
 
 }
-function readModel (sceneAdd, modelName, targetSize = 40) {
+function readModel (sceneAdd, modelName, targetSize = 25) {
   var onProgress = function(xhr) {
     if (xhr.lengthComputable) {
       var percentComplete = xhr.loaded / xhr.total * 100;
@@ -130,20 +130,19 @@ function init(){
   portal = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshPhongMaterial({
     map: renderTarget.texture
   }));
-  portal.position.y = 50;
-  portal.position.z = -50;
+  //portal.position.y = 50;
+  //portal.position.z = -50;
   scene.add(portal);
 
   var gridXY = new THREE.GridHelper(200, 20, 'red', 'white');
   scene.add(gridXY);
 
   readModel(rtScene, 'Astronaut');
-  readModel(scene, 'model');
+  //readModel(scene, 'model');
 
 }
 
 function animate(){
-
   if (angle > 2.8 || angle < 0.5)
     turn *= -1;
 
@@ -151,16 +150,18 @@ function animate(){
   var am = rtScene.getObjectByName('OBJ0');
   if(am != undefined){
     console.log(am.position);
-	am.position.set(0, 20, -20)
+	//am.position.set(0, 20, -20)
   }
   var vc = scene.getObjectByName('OBJ1');
   if (vc != undefined) {
     vc.rotation.y = Math.PI;
     //viewCamera.lookAt(portal.position);
-    viewCamera.position.copy(vc.position.add(new THREE.Vector3(0, 10, -20)));
-    vc.position.set(-40 * Math.cos(angle), 50, 40 * Math.sin(angle));
+    //viewCamera.position.copy(vc.position.add(new THREE.Vector3(0, 10, -20)));
+	viewCamera.position.copy(vc.position);
+    vc.position.set(-40 * Math.cos(angle), 0, 40 * Math.sin(angle));
 
-    rtCamera.position.set(viewCamera.position.x, 0, viewCamera.position.y);
+    //rtCamera.position.set(viewCamera.position.x, 0, viewCamera.position.y);
+	rtCamera.position.copy(viewCamera.position)
     rtCamera.quaternion.copy(portal.quaternion);
 
     let portalHalfWidth = 50;
