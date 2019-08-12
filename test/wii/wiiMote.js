@@ -17,9 +17,9 @@ remote = wii.findRemotes();
 if(remote!=undefined){
   console.log('yeah!!');
   remote[0].setLed(1);
-  setInterval(function(){
+  /*setInterval(function(){
 	console.log(remote[0].accelerateZ);
-  }, 100);
+  }, 100);*/
   enableIR();
 }
 else{
@@ -36,10 +36,10 @@ io.on('connection', function(socket){
   }, 20);
 
 
-  remote[0].on("b", function(pressed){
+  remote[0].on("a", function(pressed){
     if(pressed == true){
-      console.log('buttonB pressed!');
-      io.emit('b', true);
+      console.log('buttonA pressed!');
+      io.emit('a', true);
     }
   });
   remote[0].on("up", function(pressed){
@@ -72,15 +72,21 @@ io.on('connection', function(socket){
 		io.emit('right', false);
 	}
   });
-  remote[0].on("a", function(pressed){
+  remote[0].on("b", function(pressed){
     if(pressed == true){
-      console.log('buttonA pressed!');
-      io.emit('a', true);
+      console.log('buttonB pressed!');
+      io.emit('b', true);
     }
 	else{
-		console.log('buttonA release!');
-      io.emit('a', false);
+		console.log('buttonB release!');
+      io.emit('b', false);
 	}
+  });
+  remote[0].on("1", function(pressed){
+    if(pressed == true){
+      console.log('button1 pressed!');
+      io.emit('1', true);
+    }
   });
 
 });

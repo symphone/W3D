@@ -35,7 +35,8 @@
 </head>
 
 <body>
-  <div id="score">SCORE:0<div>
+  <!--div id="score">SCORE:0<div-->
+  <div id = 'pos'></div>
   <div><button id="toggle">toggle</button></div>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/103/three.min.js"></script>
       <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
@@ -54,16 +55,16 @@
         var frontSight, Zplane = 0, isHit = false,
           hitPos, hitObj, score = 0;
         ///explosion
-        const pointCount = 300 // 粒子總數
-        const movementSpeed = 10 // 移動速度
-        const size = 2 // 粒子尺寸
-        var explosions = [] // 爆炸物件
-		var cameraR = true
-		var keyboard = new KeyboardState();
-		var xOffset = 0, yOffset = 0
-		var curPos, flag = false, flag2 = true
-		var L = 300
-		var near = L/2;
+        const pointCount = 300; // 粒子總數
+        const movementSpeed = 10; // 移動速度
+        const size = 2; // 粒子尺寸
+        var explosions = []; // 爆炸物件
+		var cameraR = true;
+		var keyboard = new KeyboardState(), mouse = new THREE.Vector2();
+		var xOffset = 0, yOffset = 0;
+		var curPos, flag = false, flag2 = true;
+		var L = 300, theta = 0, phi = 0, r = 50;
+		var near = L/2, settings;
 
 		
 		$('#toggle').click(function(){
@@ -123,7 +124,7 @@
             // console.log(renderer.info)
           }
         }
-
+			
         $(function() {
           var socket = io();
           socket.on('ir', function(ir) {
@@ -138,15 +139,17 @@
             frontSight.position.copy(pos);
 			//curPos = pos.clone()
             //console.log(cursor);
-            /*circle1.position.set(ir.x[0]-512, ir.y[0], 0);
-            circle2.position.set(ir.x[1]-512, ir.y[1], 0);
-            circle3.position.set(ir.x[2]-512, ir.y[2], 0);
-            circle4.position.set(ir.x[3]-512, ir.y[3], 0);
-            let x = ir.x[0]-512;
-            let y = ir.y[0]-384;
-            circle1.position.set( -x, -y, 0);*/
+            //circle1.position.set(ir.x[0]-512, ir.y[0], 0);
+            //circle2.position.set(ir.x[1]-512, ir.y[1], 0);
+            //circle3.position.set(ir.x[2]-512, ir.y[2], 0);
+            //circle4.position.set(ir.x[3]-512, ir.y[3], 0);
+            //let x = ir.x[0]-512;
+            //let y = ir.y[0]-384;
+            //circle1.position.set( -x, -y, 0);
+			$('#pos').html("oriPos = " + ir.x[0] + " y = " + ir.y[0] );
+			//x 1023 y 698 test dis with virtual and real also diff far
           });
-          socket.on('b', function(button){
+          socket.on('a', function(button){
             if (isHit) {
               //console.log(hitPos);
               scene.remove(hitObj);
@@ -159,7 +162,7 @@
                 explosions[0].destroy();
                 explosions.shift();
               }
-              $('#score').html("SCORE:" + score);
+              //$('#score').html("SCORE:" + score);
               //console.log(explosions);
             } else {
               console.log("No Hit");
@@ -168,8 +171,9 @@
 		  socket.on('up', function(button){
 			if(button ==true){
 				if(flag){
-					yOffset += 0.5
-					flag2 = true
+					//yOffset += 0.5
+					phi += 0.1;
+					flag2 = true;
 				}
 				else {
 					camera.position.z -= 1;
@@ -180,8 +184,9 @@
 		  socket.on('down', function(button){
 			if(button ==true){
 				if(flag){ 
-					yOffset -= 0.5
-					flag2 = true
+					//yOffset -= 0.5
+					phi -= 0.1;
+					flag2 = true;
 				}
 				else{
 					camera.position.z += 1;
@@ -192,8 +197,9 @@
 		  socket.on('left', function(button){
 			  if(button ==true){
 				if(flag){
-					xOffset += 0.5;
-					flag2 = true 
+					//xOffset += 0.5;
+					theta += 0.1;
+					flag2 = true; 
 				}
 				else{
 					camera.position.x -= 1;
@@ -205,8 +211,9 @@
 		  socket.on('right', function(button){
 			if(button ==true){
 				if(flag){
-					xOffset -= 0.5;
-					flag2 = true
+					//xOffset -= 0.5;
+					theta -= 0.1;
+					flag2 = true;
 				}
 				else{
 					camera.position.x += 1;
@@ -214,16 +221,23 @@
 				//console.log(flag2)
 			}
 		  });
-		  socket.on('a', function(button){
+		  socket.on('b', function(button){
 			//xOffset = curPos.x - xOffset
 			if(button ==true)
 				flag = true
 			else
 				flag = false
 		  });
+		  socket.on('1', function(button){
+			if(button ==true){
+				camera.position.x = camera.position.y = 0;
+				camera.position.z = 150;
+				theta = phi = 0;
+			}
+		  });
 		  
         });
-
+			
         init();
         animate();
 
@@ -235,6 +249,7 @@
           renderer.setSize(window.innerHeight, window.innerHeight);
           renderer.setClearColor(0x000000);
           document.body.appendChild(renderer.domElement);
+		  renderer.autoClear = false;
 
           scene = new THREE.Scene();
 
@@ -245,12 +260,12 @@
 		  makePerspective()
 
 
-          stats = new Stats();
+          /*stats = new Stats();
           stats.showPanel(0);
           stats.domElement.style.position = 'absolute';
           stats.domElement.style.left = '0px';
           stats.domElement.style.top = '0px';
-          document.body.appendChild(stats.domElement);
+          document.body.appendChild(stats.domElement);*/
           controls = new THREE.OrbitControls(camera2, renderer.domElement);
 
           ///light
@@ -281,11 +296,12 @@
           renderer.shadowMap.renderReverseSided = false;*/
           light.shadow.bias = -0.001;
           ///model
-          initHUD();
           //createObject();
-		  createTestScene()
+		  createTestScene();
+		  initGUI();
           raycaster = new THREE.Raycaster();
           renderer.autoClear = false;
+		  
           /////
           window.addEventListener('resize', onWindowResize, false);
           //window.addEventListener('mousemove', onMouseMove, false);
@@ -293,27 +309,56 @@
         }
 
         function animate() {
-          stats.begin();
-          stats.end();
+          /*stats.begin();
+          stats.end();*/
           rayCaster();
           if (explosions.length > 0) {
             explosions.forEach(function(e) {
               e.update();
             });
           };
-		  /*keyboard.update()
-		  if (keyboard.pressed('X')) {
-			if (keyboard.pressed('shift'))
-				camera.position.x -= 0.1;
+		  keyboard.update()
+		  ///A
+		  if (keyboard.pressed('A')) {
+			if (keyboard.pressed('shift')){
+				//xOffset += 0.5;
+				flag2 = true;
+				theta += 0.1;
+				}
 			else
-				camera.position.x += 0.1;
+				camera.position.x -= 0.5;
 		  }
-			if (keyboard.pressed('Y')) {
-			if (keyboard.pressed('shift'))
-				camera.position.y -= 0.1;
+		  ///D
+		  if (keyboard.pressed('D')) {
+			if (keyboard.pressed('shift')){
+				//xOffset -= 0.5;
+				flag2 = true;
+				theta -= 0.1;
+				}
 			else
-				camera.position.y += 0.1;
-		  }*/
+				camera.position.x += 0.5;
+		  }
+		  ///W
+		  if (keyboard.pressed('W')) {
+			if (keyboard.pressed('shift')){
+				//yOffset += 0.5;
+				flag2 = true;
+				phi += 0.1;
+				}
+			else
+				camera.position.y += 0.5;
+		  }
+		  ///S
+		  if (keyboard.pressed('S')) {
+			if (keyboard.pressed('shift')){
+				//yOffset -= 0.5;
+				flag2 = true;
+				phi -=0.1;
+				}
+			else
+				camera.position.y -= 0.5;
+		  }
+		  r = settings.r;
 		  makePerspective()
           requestAnimationFrame(animate);
           render();
@@ -321,18 +366,13 @@
 
         function render() {
           renderer.clear(true);
-		  let cameraRR;
-		  if(cameraR)
-			cameraRR = camera;
-		  else
-			cameraRR = camera2;
-          renderer.render(scene, cameraRR);
-          //renderer.render(sceneHUD, cameraHUD);
+		  cameraRR = camera;
+          renderer.render(scene, camera);
         }
 		function makePerspective() {
 			// set parameters
-		  let x = xOffset;
-		  let y = yOffset;
+		  let x = r*Math.sin(theta);
+		  let y = r*Math.sin(phi);
 		  let left = -(L/2+x);
 		  let right = L/2-x;
 		  let top = L/2-y;
@@ -344,28 +384,26 @@
 			camera.position.x = x
 			camera.position.y = y
 			flag2 = false
-			console.log('here')
+			//console.log('X = ' + x)
 		  }
 		  
 			camera.projectionMatrix.makePerspective (left, right, top, bottom, near, far);
 		}
 
-        function initHUD() {
-          sceneHUD = new THREE.Scene();
-
-          whRatio = window.innerWidth / window.innerHeight;
-          halfH = 10;
-          halfW = whRatio * halfH;
-          cameraHUD = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 1, 1000);
-          cameraHUD.position.z = 200;
-
-          frontSight = new THREE.Mesh(new THREE.CircleGeometry(5,32), new THREE.MeshBasicMaterial({
-            color: 'white'
-          }));
-          scene.add(frontSight);
-        }
-		
+		function initGUI() {
+		  var gui = new dat.GUI();
+		  gui.domElement.id = 'gui';
+		  
+		  settings = new function(){
+			this.r = 50;
+		  }
+		  
+		  var R = gui.addFolder('Radius');
+		  R.add(settings, 'r', 50, 200, 10);
+		 }
 		function createTestScene(){
+			
+		
 			let wall
 			
 			wall = new THREE.GridHelper(300, 10)
@@ -438,7 +476,12 @@
             mesh.position.set(100, 149.5, -250);
             pickObject.push(mesh);
             scene.add(mesh);
-		
+			
+			frontSight = new THREE.Mesh(new THREE.CircleGeometry(5,32), new THREE.MeshBasicMaterial({
+				color: 'white',
+				depthTest: false
+			  }));
+			  scene.add(frontSight);
 		}
 		
         function createObject() {
@@ -481,6 +524,8 @@
           mesh.castShadow = true;
           pickObject.push(mesh);
           scene.add(mesh);
+		  
+		  
         }
 
         function onWindowResize() {
@@ -511,7 +556,7 @@
           let dis = (Zplane -camera.position.z) / dir.z;
           let pos = camera.position.clone().add(dir.multiplyScalar(dis));
           frontSight.position.copy(pos);
-
+		  frontSight.position.sub(new THREE.Vector3(r*Math.sin(theta), r*Math.sin(phi), 0));
 
         }
 
