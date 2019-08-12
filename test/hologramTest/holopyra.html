@@ -119,7 +119,7 @@ function makeTrapezoid3(l) {
 
 	function init() {
 	  scene = new THREE.Scene();
-	  scene.background = new THREE.Color(0x999999);
+	  scene.background = new THREE.Color(0x000000);
 
 	  renderer = new THREE.WebGLRenderer();
 	   WIDTH = window.innerWidth;
@@ -238,8 +238,8 @@ function makeTrapezoid3(l) {
   //////////////////////////////////////////////////////////////
   
   var bottom = 1
-  var top = 6 +4
-  var lateral = 4.5 +3
+  var top = 6 //+4
+  var lateral = 4.5 //+3
   var oneside = (top - bottom)/2
   var l = Math.sqrt (lateral*lateral - oneside*oneside);
   var theta = Math.acos (oneside/l);
