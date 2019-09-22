@@ -48,29 +48,32 @@ body {
 	init();
 	animate();
 
-	function makeTrapezoid(l) {
+	function makeTrapezoid(l, t, b) {
 	  var geometry = new THREE.BufferGeometry();
 	  var vertices = [];
 	  var normals = [];
 	  var indices = [];
 	  var uvs = [];
-	  
+	  var tmp = (t-b)/2
+/*
 	  vertices.push (-0.5,0,0, 0.5,0,0, 3,l,0, -3,l,0);
 	  normals.push (0,0,1, 0,0,1, 0,0,1, 0,0,1);
 	  indices.push (0,1,2, 0,2,3);
 	  uvs.push (2.5/6,0, 1-2.5/6,0, 1,1, 0,1);
+*/
+	  vertices.push (-b/2,0,0, b/2,0,0, t/2,l,0, -t/2,l,0);
+	  normals.push (0,0,1, 0,0,1, 0,0,1, 0,0,1);
+	  indices.push (0,1,2, 0,2,3);
+	  uvs.push (tmp/t,0, b-tmp/t,0, b,b, 0,b);
 
 	  geometry.setIndex (indices);
 	  geometry.addAttribute ('position', new THREE.Float32BufferAttribute(vertices,3));
 	  geometry.addAttribute ('normal', new THREE.Float32BufferAttribute(normals,3));
 	  geometry.addAttribute ('uvs', new THREE.Float32BufferAttribute(uvs,2));
-	  
-	  //var geo = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial())
-	  //scene.add(geo)
-  
 
 
-	  var verticalMirror = new Reflector( geometry, 
+
+	  var verticalMirror = new Reflector( geometry,
 	     {
 						clipBias: 0.003,
 						textureWidth: WIDTH * window.devicePixelRatio,
@@ -81,7 +84,7 @@ body {
 
 	 //let verticalMirror = new THREE.Mesh (geometry, new THREE.MeshNormalMaterial());
 	 return verticalMirror;
-	 
+
 	}
 
 function makeTrapezoid3(l) {
@@ -144,10 +147,18 @@ function makeTrapezoid3(l) {
 	// picachu
   	let picatex  = loader.load ("https://i.imgur.com/GMq5omF.png");
 	
-	let pica = new THREE.Mesh (new THREE.PlaneGeometry (2,2), 
+	var bottom = 1
+	var top = 6 +3.25
+	var lateral = 4.5 +3
+	var oneside = (top - bottom)/2
+	var l = Math.sqrt (lateral*lateral - oneside*oneside);
+	var theta = Math.acos (oneside/l);
+	var side = lateral * Math.cos(theta);
+	
+	let pica = new THREE.Mesh (new THREE.PlaneGeometry (side,side), 
 	  	new THREE.MeshBasicMaterial({map: picatex, transparent: true}));
 	
-	offset = 1.5;
+	offset = side/2 + bottom/2; //1.5;
 	
 	pica0 = pica.clone();
 	  pica0.position.set (offset,0,0);
@@ -178,35 +189,30 @@ function makeTrapezoid3(l) {
 	  scene.add (pica3);
 
   //////////////////////////////////////////////////////////////
-	var bottom = 1
-	var top = 6
-	var lateral = 4.5
-	var oneside = (top - bottom)/2
-	var l = Math.sqrt (lateral*lateral - oneside*oneside);
-  var theta = Math.acos (oneside/l);
+	
   var trape;
   //console.log(l)
 
-  trape = makeTrapezoid (l);
+  trape = makeTrapezoid (l, top, bottom);
   scene.add( trape);
   trape.position.set (bottom/2,0,0)
   trape.rotation.y = Math.PI/2;
   trape.rotation.x = Math.PI/2 - theta;
   trape.rotation.order = 'YXZ';
   
-  trape = makeTrapezoid (l)
+  trape = makeTrapezoid (l, top, bottom)
   scene.add( trape);
   trape.position.set (-bottom/2,0,0)
   trape.rotation.y = -Math.PI/2;
   trape.rotation.x = Math.PI/2 - theta;
   trape.rotation.order = 'YXZ';
  
-  trape = makeTrapezoid (l)
+  trape = makeTrapezoid (l, top, bottom)
   scene.add( trape);
   trape.position.set (0,0,bottom/2)
   trape.rotation.x = Math.PI/2 - theta;
 
-  trape = makeTrapezoid (l)
+  trape = makeTrapezoid (l, top, bottom)
   scene.add( trape);
   trape.position.set (0,0,-bottom/2)
   trape.rotation.y = Math.PI;

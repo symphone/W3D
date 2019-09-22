@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+  position: absolute;
+  top: 2%;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
+
+body {
+  overflow: hidden;
+}
+
+
+</style>
+</head>
+
+<body>
+<div id="info">Bump Map
+</div>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+<script src="js/libs/ammo.js"></script>
+<script type="module">
+
+  import * as THREE from './build/three.module.js';
+
+  import Stats from './jsm/libs/stats.module.js';
+  import { GUI } from './jsm/libs/dat.gui.module.js';
+
+  import { OrbitControls } from './jsm/controls/OrbitControls.js';
+	import { OutlineEffect } from './jsm/effects/OutlineEffect.js';
+  import { MMDLoader } from './jsm/loaders/MMDLoader.js';
+  import { MMDAnimationHelper } from './jsm/animation/MMDAnimationHelper.js';
+  	var scene, renderer, camera;
+    var WIDTH, HEIGHT;
+    var offset;
+	var keyboard = new KeyboardState();
+	var mesh, clock = new THREE.Clock();
+	var helper, ikHelper, physicsHelper, effect;
+	var modelFile = 'models/Rin/Rin.pmx';
+	var vmdFiles = ['vmds/idle.vmd', 'vmds/walk.vmd', 'vmds/run.vmd'];
+
+	Ammo().then(function(AmmoLib) {
+		Ammo = AmmoLib;
+		init();
+		animate();
+	});
+	
+	function init() {
+	  scene = new THREE.Scene();
+	  scene.background = new THREE.Color(0x999999);
+
+	  renderer = new THREE.WebGLRenderer({
+        antialias: true
+      });
+	   WIDTH = window.innerWidth;
+	   HEIGHT = window.innerHeight;
+	  renderer.setSize(WIDTH, HEIGHT);
+	  //renderer.setClearColor(0x888888);
+	  document.body.appendChild(renderer.domElement);
+
+	  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 3000);
+	  camera.position.z = 20;
+
+	  let controls = new OrbitControls(camera, renderer.domElement);
+	  
+		effect = new OutlineEffect(renderer);
+	 /*var lightA = new THREE.AmbientLight(0xffffff);
+     scene.add(lightA);*/
+	 /* var light = new THREE.DirectionalLight(0xffffff);
+		light.position.set(0, 20, 20);
+		scene.add(light);
+	  */
+	  var light = new THREE.PointLight( 0xffffff );
+	  light.position.set( 0, 20, 20 );
+	  scene.add( light );
+	  initModel(modelFile, vmdFiles[0]);
+	  
+	  var box1 = createMesh(new THREE.BoxGeometry(15, 15, 2), "8021-diffuse.jpg");
+	  box1.rotation.y = -0.75;
+	  box1.position.x = 10;
+	  scene.add(box1);
+	  
+	  var box2 = createMesh(new THREE.BoxGeometry(15, 15, 2), "8021-diffuse.jpg", "8021-bump.jpg");
+	  box2.rotation.y = 0.75;
+	  box2.position.x = -10;
+	  scene.add(box2);
+	  
+	  window.addEventListener('resize', onWindowResize, false);
+	  }
+
+	
+	function animate() {
+	  requestAnimationFrame(animate);
+	  helper.update(clock.getDelta());
+	  effect.render(scene, camera);
+
+	  renderer.render(scene, camera);
+	}
+function initModel(model, vmd){
+    ///model
+
+    function onProgress(xhr) {
+      if (xhr.lengthComputable) {
+        var percentComplete = xhr.loaded / xhr.total * 100;
+        console.log(Math.round(percentComplete, 2) + '% downloaded');
+      }
+    };
+
+    function onError(xhr) {};
+
+    var loader = new MMDLoader();
+    console.log(model);
+
+    helper = new MMDAnimationHelper({
+      afterglow: 2.0
+    });
+
+    loader.loadWithAnimation(model, vmd, function(mmd){
+        mesh = mmd.mesh;
+        mesh.position.set(20, -7.5, 0);
+        scene.add(mesh);
+
+        helper.add( mesh, {
+					animation: mmd.animation,
+					physics: true
+				} );
+
+        ikHelper = helper.objects.get( mesh ).ikSolver.createHelper();
+				ikHelper.visible = false;
+				scene.add( ikHelper );
+
+				physicsHelper = helper.objects.get( mesh ).physics.createHelper();
+				physicsHelper.visible = false;
+				scene.add( physicsHelper );
+
+    },onProgress, onError);
+  }
+	function createMesh(geom, imageFile, bump, x = 3, y = 3){
+		//geom.computeVertexNormals();
+		var texture = new THREE.TextureLoader().load("images/" + imageFile);
+		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+		texture.repeat.set(x,y)
+		var mat = new THREE.MeshPhongMaterial({map:texture});
+		
+		if(bump){
+			texture = new THREE.TextureLoader().load("images/" + bump);
+			texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+			texture.repeat.set(x,y)
+			mat.bumpMap = texture;
+			mat.bumpScale = 0.6;	
+			}
+		//mat.needsUpdate = true;
+		return new THREE.Mesh(geom, mat);
+		
+	}
+	function onWindowResize() {
+	  camera.aspect = window.innerWidth / window.innerHeight;
+	  camera.updateProjectionMatrix();
+	  renderer.setSize(window.innerWidth, window.innerHeight);
+	}
+	
+</script>
+</body>
+
+</html>

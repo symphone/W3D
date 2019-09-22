@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dungeon</title>
+  <style >
+    html{
+      overflow: hidden;
+    }
+    #toggle{
+      position: absolute;
+      left: 50vw;
+    }
+	#container{
+		width: 720px;
+		height: 720px;
+	}
+  </style>
+</head>
+<body>
+  <input type="button" id="toggle" value="toggle">
+  <div id="container"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
+  <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.3.0/Tween.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module">
+    //import * as THREE from './build/three.module.js';
+    //import { OrbitControls } from './jsm/controls/OrbitControls.js';
+    var frame, scene, camera, camera2, renderer, light, controls, Boxc;
+    var stats, cursor = new THREE.Vector2(), Zplane = -3, frontSight, keyboard = new KeyboardState(), player = new THREE.Object3D(), flashLight, toggle = true, spotLightHelper, target, isMoving = false;
+    var map =  [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+                [0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+                [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                [0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                [0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                [0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                [0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                [0, 0, 1, 1, 1, 0, 1, 2, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+                [0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+	var L = 0.2, near = L/2, flag = false, flag2 = false;
+	var theta = 0, phi = 0;
+	var forward = new THREE.Vector2(0, 1), back =  new THREE.Vector2(0, -1), left = new THREE.Vector2(1, 0), right = new THREE.Vector2(-1, 0)
+	var startPoint = new THREE.Vector2(22, 0), curPoint = new THREE.Vector2()
+	
+
+   /* 
+	$(function() {
+          var socket = io();
+          socket.on('wii', function(wiiMote) {
+			let ww = $('#container').innerWidth();
+			let hh = $('#container').innerHeight();
+              cursor.x = (-(wiiMote.IRx[0]-512)/ ww )*2;
+              cursor.y = (-(wiiMote.IRy[0]-349)/ hh )*2;
+
+            let vec = new THREE.Vector3(cursor.x, cursor.y, Zplane);
+            //vec.unproject(camera);
+            //let dir = vec.sub(camera.position).normalize();
+            //let dis = (Zplane - camera.position.z) / dir.z;
+            //let pos = camera.position.clone().add(dir.multiplyScalar(dis));
+            frontSight.position.copy(vec);
+			
+			if( isMoving == false){
+				if(wiiMote.Up == true){
+					if(!flag ){
+						let v1 = new THREE.Vector3(0, 0, 1).applyQuaternion( player.quaternion );
+						let Dis = player.position.clone().add(v1.multiplyScalar(-1));
+						let tween = new TWEEN.Tween(player.position)
+									.to(Dis, 200)
+									.onStart(function(){
+									  isMoving = true;
+									})
+									.onComplete(function(){
+									  isMoving = false;
+									})
+									.start();
+							
+					}
+					else if(flag){
+						if(phi <= Math.PI/2)
+							phi += 0.1;
+						flag2 = true;
+					}
+				}
+				if(wiiMote.Down == true){
+					if(!flag ){
+						let v1 = new THREE.Vector3(0, 0, 1).applyQuaternion( player.quaternion );
+						let Dis = player.position.clone().add(v1.multiplyScalar(1));
+						let tween = new TWEEN.Tween(player.position)
+									.to(Dis, 200)
+									.onStart(function(){
+									  isMoving = true;
+									})
+									.onComplete(function(){
+									  isMoving = false;
+									})
+									.start();
+					}
+					else if(flag){
+						if(phi >= -Math.PI/2)
+							phi -= 0.1;
+						flag2 = true;
+					}
+				}
+				if(wiiMote.Left == true){
+					if(!flag ){
+						let R = {x: 0, y:player.rotation.y + Math.PI/2, z:0};
+						let tween = new TWEEN.Tween(player.rotation)
+								  .to(R, 500)
+								  .onStart(function(){
+									isMoving = true;
+								  })
+								  .onComplete(function(){
+									isMoving = false;
+								  })
+								  .start();
+					}
+					else if(flag){
+						if(theta <= Math.PI/2)
+							theta += 0.1;
+						flag2 = true;
+					}
+				}
+				if(wiiMote.Right == true){
+						if(!flag ){
+							let R = {x: 0, y:player.rotation.y - Math.PI/2, z:0};
+							let tween = new TWEEN.Tween(player.rotation)
+									  .to(R, 500)
+									  .onStart(function(){
+										isMoving = true;
+									  })
+									  .onComplete(function(){
+										isMoving = false;
+									  })
+									  .start();
+						}
+						else if(flag){
+							if(theta >= -Math.PI/2)
+								theta -= 0.1;
+							flag2 = true;
+						}				
+				}
+			}
+			
+			if(wiiMote.A == true){
+				if (isHit) {
+				  //console.log(hitPos);
+				  scene.remove(hitObj);
+				  let index = pickObject.indexOf(hitObj);
+				  if(index > -1)
+					pickObject.splice(index, 1);
+				  score += 100;
+				  explosions.push(new Explosion(hitPos.x, hitPos.y, hitPos.z));
+				  setInterval(function(){
+					  explosions[0].destroy();
+					  explosions.shift();
+					}, 5000);
+				  //$('#score').html("SCORE:" + score);
+				  //console.log(explosions);
+				} else {
+				 // console.log("No Hit");
+				}				
+			}
+			if(wiiMote.B == true)
+				flag = true
+			else
+				flag = false
+			
+			if(wiiMote.button1 == true){
+					player.position.set(22, 0.5, -3);
+					camera.position.set(0, 0, 0); 
+					theta = phi = 0;
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			//curPos = pos.clone()
+            //console.log(cursor);
+            //circle1.position.set(ir.x[0]-512, ir.y[0], 0);
+            //circle2.position.set(ir.x[1]-512, ir.y[1], 0);
+            //circle3.position.set(ir.x[2]-512, ir.y[2], 0);
+            //circle4.position.set(ir.x[3]-512, ir.y[3], 0);
+            //let x = ir.x[0]-512;
+            //let y = ir.y[0]-384;
+            //circle1.position.set( -x, -y, 0);
+			//$('#pos').html("oriPos = " + ir.x[0] + " y = " + ir.y[0] );
+			//x 1023 y 698 test dis with virtual and real also diff far
+			//x117-427 85 of 29 502-850 119 y247-294 uTd 7.5 of 29 194-244 85 : bar left
+          });
+		  
+          /*socket.on('a', function(button){
+            if (isHit) {
+              //console.log(hitPos);
+              scene.remove(hitObj);
+              let index = pickObject.indexOf(hitObj);
+              if(index > -1)
+                pickObject.splice(index, 1);
+              score += 100;
+              explosions.push(new Explosion(hitPos.x, hitPos.y, hitPos.z));
+              setInterval(function(){
+				  explosions[0].destroy();
+				  explosions.shift();
+				}, 5000);
+              //$('#score').html("SCORE:" + score);
+              //console.log(explosions);
+            } else {
+             // console.log("No Hit");
+            }
+          });
+		  
+			  socket.on('up', function(button){
+				if(button ==true){
+					if(!flag && !isMoving){
+						let v1 = new THREE.Vector3(0, 0, 1).applyQuaternion( player.quaternion );
+						  let Dis = player.position.clone().add(v1.multiplyScalar(-1));
+						  let tween = new TWEEN.Tween(player.position)
+									.to(Dis, 200)
+									.onStart(function(){
+									  isMoving = true;
+									})
+									.onComplete(function(){
+									  isMoving = false;
+									})
+									.start();
+							
+					}
+					else if(flag){
+						if(phi <= Math.PI/2)
+							phi += 0.1;
+						flag2 = true;
+					}
+				}
+				if(button ==true){
+					if(flag){
+						//yOffset += 0.5
+						if(phi <= Math.PI/2)
+						 phi += 0.1;
+						flag2 = true;
+					}
+					else {
+						player.position.z -= 1;
+						//Zplane -= 1;
+						
+					}
+				}
+			  });
+			  socket.on('down', function(button){
+				if(button ==true){
+					if(!flag && !isMoving){
+						let v1 = new THREE.Vector3(0, 0, 1).applyQuaternion( player.quaternion );
+						  let Dis = player.position.clone().add(v1.multiplyScalar(1));
+						  let tween = new TWEEN.Tween(player.position)
+									.to(Dis, 200)
+									.onStart(function(){
+									  isMoving = true;
+									})
+									.onComplete(function(){
+									  isMoving = false;
+									})
+									.start();
+					}
+					else if(flag){
+						if(phi >= -Math.PI/2)
+							phi -= 0.1;
+						flag2 = true;
+					}
+				}
+				/*if(button ==true){
+					if(flag){ 
+						//yOffset -= 0.5
+						if(phi >= -Math.PI/2)
+							phi -= 0.1;
+						flag2 = true;
+					}
+					else{
+						player.position.z += 1;
+						//Zplane += 1;
+					}
+				}
+			  });
+			  socket.on('left', function(button){
+				if(button ==true){
+					if(!flag && !isMoving){
+						let R = {x: 0, y:player.rotation.y + Math.PI/2, z:0};
+						let tween = new TWEEN.Tween(player.rotation)
+								  .to(R, 500)
+								  .onStart(function(){
+									isMoving = true;
+								  })
+								  .onComplete(function(){
+									isMoving = false;
+								  })
+								  .start();
+					}
+					else if(flag){
+						if(theta <= Math.PI/2)
+							theta += 0.1;
+						flag2 = true;
+					}
+				}
+				  /*if(button ==true){
+					if(flag){
+						//xOffset += 0.5;
+						if(theta <= Math.PI/2)
+						 theta += 0.1;
+						flag2 = true; 
+					}
+					else{
+						camera.position.x -= 1;
+						let vec = new THREE.Vector3(cursor.x, cursor.y, 0.5);
+						vec.unproject(camera);
+						let dir = vec.sub(camera.position).normalize();
+						//let dis = (Zplane - camera.position.z) / dir.z;
+						//let pos = camera.position.clone().add(dir.multiplyScalar(dis));
+						console.log(dir);
+					}
+					//console.log(camera.position.z)
+					
+				}
+			  });
+			  socket.on('right', function(button){
+				if(button ==true){
+					if(!flag && !isMoving){
+						let R = {x: 0, y:player.rotation.y - Math.PI/2, z:0};
+						let tween = new TWEEN.Tween(player.rotation)
+								  .to(R, 500)
+								  .onStart(function(){
+									isMoving = true;
+								  })
+								  .onComplete(function(){
+									isMoving = false;
+								  })
+								  .start();
+					}
+					else if(flag){
+						if(theta >= -Math.PI/2)
+							theta -= 0.1;
+						flag2 = true;
+					}
+				}
+				/*if(button ==true){
+					if(flag){
+						//xOffset -= 0.5;
+						if(theta >= -Math.PI/2)
+							theta -= 0.1;
+						flag2 = true;
+					}
+					else{
+						camera.position.x += 1;
+					}
+					//console.log(flag2)
+				}
+			  });
+		    });
+		  
+		  socket.on('b', function(button){
+			//xOffset = curPos.x - xOffset
+			if(button ==true)
+				flag = true
+			else
+				flag = false
+		  });
+		  socket.on('1', function(button){
+			if(button ==true){
+				player.position.x = player.position.y = 0;
+				player.position.z = -3;
+				theta = phi = 0;
+			}
+		  });
+		  
+        });
+		*/
+		
+	$('#toggle').click(function(){
+        toggle = !toggle;
+    });
+	
+	function makePerspective() {
+			// set parameters
+		  let r = 0.05;
+		  let x = r*Math.sin(theta);
+		  let y = r*Math.sin(phi);
+		  let left = -(L/2+x);
+		  let right = L/2-x;
+		  let top = L/2-y;
+		  let bottom = -(L/2+y);
+		  let far = 100000//near + L;
+		  
+		  
+		  if(flag2){
+			camera.position.x = x
+			camera.position.y = y
+			flag2 = false
+			//console.log('X = ' + x)
+		  }
+		  
+			camera.projectionMatrix.makePerspective (left, right, top, bottom, near, far);
+			Boxc.position.copy(camera.position) ; 
+		}
+
+    function rotMatrix2D(vec2, angle){
+		let tmpX = vec2.x, tmpY = vec2.y;
+		vec2.x = tmpX * Math.cos(angle) - tmpY * Math.sin(angle);
+		vec2.y = tmpY * Math.cos(angle) + tmpX * Math.sin(angle);
+		return vec2;
+	}
+	
+	init();
+  	animate();
+	
+
+    function init(){
+      scene = new THREE.Scene();
+      renderer = new THREE.WebGLRenderer();
+	  let ww = $('#container').innerWidth();
+	  let hh = $('#container').innerHeight();
+      renderer.setSize(ww, hh);
+      renderer.setClearColor(0x888888);
+      //document.body.appendChild(renderer.domElement);
+	  $("#container").append(renderer.domElement);
+
+      camera = new THREE.PerspectiveCamera(60, ww / hh, 0.1, 1000);
+      /*camera.position.set(22, 0.5, -5);
+      camera.rotation.y = Math.PI;*/
+	  
+
+      camera2 = new THREE.PerspectiveCamera(60, ww / hh, 0.1, 2000);
+      camera2.position.set(22, 20, -5);
+
+      let controls = new THREE.OrbitControls(camera2, renderer.domElement);
+      controls.enableKeys = false;
+
+      light = new THREE.DirectionalLight(0xffffff, 0.25);
+      light.position.set(20, 100, 10);
+      scene.add(light);
+
+      var lightA = new THREE.AmbientLight(0x111111, 3);
+      scene.add(lightA);
+
+      flashLight = new THREE.SpotLight(0xffffff, 1, 200, 0.35, 0.333);
+      flashLight.position.set(0, 0, 0);
+      //target = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial());
+      target = new THREE.Object3D();
+      target.position.z -= 1;
+      flashLight.target = target;
+      //camera.add(flashLight);
+      //scene.add(target);
+
+      //scene.add(flashLight);
+      /*spotLightHelper = new THREE.SpotLightHelper( flashLight );
+      scene.add( spotLightHelper );*/
+		frontSight = new THREE.Mesh(new THREE.CircleGeometry(0.1,20), new THREE.MeshBasicMaterial({
+			color: 'white',
+			depthTest: false,
+			depthWrite: false
+		}));
+		frontSight.renderOrder = 2;
+		frontSight.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
+		frontSight.position.set(0, 0, -3); 
+		
+	  let box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({color:'red'}));	
+	  Boxc = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshBasicMaterial({color:'blue'}));
+	  Boxc.position.copy(camera.position); 
+      player.add(camera, flashLight, target, frontSight, box, Boxc);
+      player.position.set(22, 0.5, 0);
+      player.rotation.y = Math.PI;
+      scene.add(player);
+	  makePerspective(); 
+	  
+      createDungeon();
+	  ////////////
+	  curPoint.copy(startPoint)
+	  
+      /////
+      window.addEventListener('resize', onWindowResize, false);
+	  //window.addEventListener('mousemove', onMouseMove, false);
+    }
+    function animate() {
+      //flashLight.position.copy(player.position);
+      //flashLight.position.z += 0.5;
+      //spotLightHelper.update();
+      /*target.position.copy(camera.position);
+      target.position.z += 1;*/
+      keyboard.update();
+	  let nextPoint, tmpX, tmpY;
+      if(isMoving == false){
+    	  if (keyboard.pressed ('W')){
+			nextPoint = curPoint.clone().add(forward);
+			console.log(nextPoint.x + " " + nextPoint.y + " " + map[nextPoint.y][nextPoint.x])
+			if(map[nextPoint.y][nextPoint.x] == 1){
+			  curPoint.add(forward);
+			  let v1 = new THREE.Vector3(0, 0, 1).applyQuaternion( player.quaternion );
+			  let Dis = player.position.clone().add(v1.multiplyScalar(-1));
+			  let tween = new TWEEN.Tween(player.position)
+						.to(Dis, 200)
+						.onStart(function(){
+						  isMoving = true;
+						})
+						.onComplete(function(){
+						  isMoving = false;
+						})
+						.start();
+				//camera.translateZ(-1);
+			}
+        }
+    	  else if (keyboard.pressed ('S')){
+			nextPoint = curPoint.clone().add(back);
+			//console.log(nextPoint.x + " " + nextPoint.y + " " + map[nextPoint.y][nextPoint.x])
+			if(map[nextPoint.y][nextPoint.x] == 1){
+				  curPoint.add(back);
+				  let v1 = new THREE.Vector3(0, 0, 1).applyQuaternion( player.quaternion );
+				  let Dis = player.position.clone().add(v1.multiplyScalar(1));
+				  let tween = new TWEEN.Tween(player.position)
+							.to(Dis, 200)
+							.onStart(function(){
+							  isMoving = true;
+							})
+							.onComplete(function(){
+							  isMoving = false;
+							})
+							.start();
+					//camera.translateZ(1);
+			}
+        }
+        else if (keyboard.pressed ('A')){
+			forward = rotMatrix2D(forward, -Math.PI/2)
+			back = rotMatrix2D(back, -Math.PI/2)
+			console.log(forward.x + " " + forward.y)
+            let R = {x: 0, y:player.rotation.y + Math.PI/2, z:0};
+            let tween = new TWEEN.Tween(player.rotation)
+                      .to(R, 500)
+                      .onStart(function(){
+                        isMoving = true;
+                      })
+                      .onComplete(function(){
+                        isMoving = false;
+                      })
+                      .start();
+    	  	//camera.rotation.y -= Math.PI/2;
+        }
+        else if (keyboard.pressed ('D')){
+			forward = rotMatrix2D(forward, Math.PI/2)
+			back = rotMatrix2D(back, Math.PI/2)
+			console.log(forward.x + " " + forward.y)
+            let R = {x: 0, y:player.rotation.y - Math.PI/2, z:0};
+            let tween = new TWEEN.Tween(player.rotation)
+                        .to(R, 500)
+                        .onStart(function(){
+                          isMoving = true;
+                        })
+                        .onComplete(function(){
+                          isMoving = false;
+                        })
+                        .start();
+            //camera.rotation.y += Math.PI/2;
+        }
+		else if(keyboard.pressed ('Z')){
+			if(theta <= Math.PI/2)
+				theta += 0.1;
+			flag2 = true;
+		}
+		else if(keyboard.pressed ('X')){
+			if(theta >= -Math.PI/2)
+				theta -= 0.1;
+			flag2 = true;
+		}
+      }
+
+	  makePerspective()
+      requestAnimationFrame(animate);
+      TWEEN.update();
+      render();
+    }
+
+    function render() {
+      if(toggle === true)
+        renderer.render(scene, camera);
+      else
+        renderer.render(scene, camera2);
+    }
+
+    function createDungeon(){
+      let texture = new THREE.TextureLoader().load("https://raw.githubusercontent.com/symphone/W3D/master/test/hologramTest/images/8021-diffuse.jpg");
+	  //texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+	  //texture.repeat.set(3,3)
+      let bump = new THREE.TextureLoader().load("https://raw.githubusercontent.com/symphone/W3D/master/test/hologramTest/images/8021-bump.jpg");
+      //bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
+	  //bump.repeat.set(3,3)
+	  let material = new THREE.MeshPhongMaterial({color: 0x666666, map:texture, bumpMap:bump, bumpScale:0.1});
+      let basicWallGeom = new THREE.BoxGeometry(1, 1, 1);
+      let basicTileGeom = new THREE.PlaneGeometry(1, 1, 1);
+
+      for (let y = 0; y < map.length; y++) {
+        let row = map[y];
+        for (let x = 0; x < row.length; x++){
+          let type = row[x];
+
+          if (type == 0) {
+               let mesh = new THREE.Mesh(basicWallGeom, material);
+              // mesh.castShadow = true;
+              // mesh.receiveShadow = true;
+
+               mesh.position.x = x;
+               mesh.position.y = 0.5;
+               mesh.position.z = y;
+               scene.add(mesh);
+           }
+           else if (type == 1 || type == 2) {
+               let floorMesh = new THREE.Mesh(basicTileGeom, material);
+              // floorMesh.castShadow = true;
+              // floorMesh.receiveShadow = true;
+
+               floorMesh.position.x = x;
+               floorMesh.position.y = 0;
+               floorMesh.position.z = y;
+               floorMesh.rotation.x = Math.PI*-0.5;
+               scene.add(floorMesh);
+
+               let ceilMesh = new THREE.Mesh(basicTileGeom, material);
+            //   ceilMesh.castShadow = true;
+            //   ceilMesh.receiveShadow = true;
+
+               ceilMesh.position.x = x;
+               ceilMesh.position.y = 1;
+               ceilMesh.position.z = y;
+               ceilMesh.rotation.x = Math.PI*0.5;
+               scene.add(ceilMesh);
+           }
+        }
+      }
+    }
+	function onMouseMove() {
+	  event.preventDefault();
+	  let ww = $('#container').innerWidth();
+	  let hh = $('#container').innerHeight();
+	  mouse.x = (event.clientX / ww) * 2 - 1;
+	  mouse.y = -(event.clientY / hh) * 2 + 1;
+
+	  let vec = new THREE.Vector3(mouse.x, mouse.y, -3);
+	  /*vec.unproject(camera);
+	  let dir = vec.sub(player.position).normalize();
+	  let dis = (Zplane -player.position.z) / dir.z;
+	  let pos = player.position.clone().add(dir.multiplyScalar(dis));*/
+	  frontSight.position.copy(vec);
+	  //frontSight.position.sub(new THREE.Vector3(20*Math.sin(theta), 20*Math.sin(phi), -2));
+
+	}
+    function onWindowResize() {
+	  let ww = $('#container').innerWidth();
+	  let hh = $('#container').innerHeight();
+      camera.aspect = ww / hh;
+      camera.updateProjectionMatrix();
+      renderer.setSize(ww, hh);
+    }
+  </script>
+</body>
+</html>
