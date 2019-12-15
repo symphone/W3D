@@ -22,8 +22,7 @@ body {
 </head>
 
 <body> 
-<div id="info">Holographic Pyramid
-  <br> with Reflector
+<div id="info">
   <br>
 </div>
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -124,13 +123,13 @@ function makeTrapezoid3(l) {
 	  document.body.appendChild(renderer.domElement);
 
 	  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 3000);
-	  camera.position.z = 50;
+	  camera.position.set(0,11,0);
   
 	  let controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableKeys = false;
 	
 	  window.addEventListener('resize', onWindowResize, false);
-	  scene.add (new THREE.AxesHelper(10));
+	  //scene.add (new THREE.AxesHelper(10));
  
   	let loader = new THREE.TextureLoader();
 
@@ -189,7 +188,7 @@ function makeTrapezoid3(l) {
 	  scene.add (pica3);
 
   //////////////////////////////////////////////////////////////
-	
+/*	
   var trape;
   //console.log(l)
 
@@ -218,34 +217,9 @@ function makeTrapezoid3(l) {
   trape.rotation.y = Math.PI;
   trape.rotation.x = Math.PI/2 - theta;
   trape.rotation.order = 'YXZ';
-  
+  */
   ////////////////////////////////////////
-  /*rtScene = new THREE.Scene();
-  rtCamera = new THREE.PerspectiveCamera(60, 1, 0.5, 2000);
-  rtCamera.position.z = 50;
-  rtCamera.position.y = 10;
-  var light2 = new THREE.AmbientLight(0xffffff);
-  rtScene.add(light2);
   
-  renderTarget = new THREE.WebGLRenderTarget(
-    1024, 1024, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.NearestFilter
-    });
-	var plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 5), new THREE.MeshBasicMaterial({
-		map: renderTarget.texture,
-		transparent: true
-	  }));
-	  plane.position.set(0,0.1,0.5)
-	  plane.rotation.x = -Math.PI/2
-	  scene.add(plane);
-	  
-	  pica2 = new THREE.Mesh (new THREE.PlaneGeometry (50,50), 
-	  	new THREE.MeshBasicMaterial({map: picatex, transparent: true}));
-	  pica2.rotation.y = Math.PI;
-	  pica2.rotation.x = -Math.PI/2;
-	  pica2.rotation.order = 'YXZ'
-	  rtScene.add (pica2);*/
 
 }
 
