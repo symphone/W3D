@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+  position: absolute;
+  top: 2%;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
+
+body {
+  overflow: hidden;
+}
+
+
+</style>
+</head>
+
+<body> 
+<div id="info">Holographic Pyramid
+  <br> with Reflector
+  <br>
+  <button id="t1" style="width:20%">Top L</button>
+  <button id="t2" style="width:20%">Top S</button>
+  <button id="t3" style="width:20%">Siide L</button>
+  <button id="t4" style="width:20%">Side S</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+
+<script type="module">
+	import * as THREE from 'https://raw.githack.com/mrdoob/three.js/dev/build/three.module.js';
+
+	import { OrbitControls } from 'https://raw.githack.com/mrdoob/three.js/dev/examples/jsm/controls/OrbitControls.js';
+	import { Reflector } from 'https://raw.githack.com/mrdoob/three.js/dev/examples/jsm/objects/Reflector.js';
+
+	var scene, renderer, camera;
+    var WIDTH, HEIGHT;
+    var offset;
+	var keyboard = new KeyboardState();
+	var pica0, pica1, pica2, pica3;
+	var index = 0, top, bottom, lateral;
+	
+	function removeReflection(){
+		scene.remove (scene.getObjectByName ('r0'));
+		scene.remove (scene.getObjectByName ('r1'));
+		scene.remove (scene.getObjectByName ('r2'));
+		scene.remove (scene.getObjectByName ('r3'));
+		index= 0;
+	}
+	function makeReflection(){
+		var oneside = (top-bottom)/2;
+		var l = Math.sqrt (lateral*lateral - oneside*oneside);
+		var theta = Math.acos (oneside/l);
+		var trape;
+		trape = makeTrapezoid (l, top, bottom);
+		scene.add( trape);
+		trape.position.set (0.5,0,0)
+		trape.rotation.y = Math.PI/2;
+		trape.rotation.x = Math.PI/2 - theta;
+		trape.rotation.order = 'YXZ';
+		  
+		trape = makeTrapezoid (l, top, bottom)
+		scene.add( trape);
+		trape.position.set (-.5,0,0)
+		trape.rotation.y = -Math.PI/2;
+		trape.rotation.x = Math.PI/2 - theta;
+		trape.rotation.order = 'YXZ';
+		 
+		trape = makeTrapezoid (l, top, bottom)
+		scene.add( trape);
+		trape.position.set (0,0,.5)
+		trape.rotation.x = Math.PI/2 - theta;
+
+		trape = makeTrapezoid (l, top, bottom)
+		scene.add( trape);
+		trape.position.set (0,0,-.5)
+		trape.rotation.y = Math.PI;
+		trape.rotation.x = Math.PI/2 - theta;
+		trape.rotation.order = 'YXZ';
+	}
+	$("#t1").click(function() {
+	  removeReflection();
+	  top += 0.1;
+	  makeReflection();
+	  console.log("top= "+top+" side= "+lateral+" off= "+offset);
+	});
+	$("#t2").click(function() {
+	  removeReflection();
+	  top -= 0.1;
+	  makeReflection();
+	  console.log("top= "+top+" side= "+lateral+" off= "+offset);
+	});
+	$("#t3").click(function() {
+	  removeReflection();
+	  lateral += 0.1;
+	  makeReflection();
+	  console.log("top= "+top+" side= "+lateral+" off= "+offset);
+	});
+	$("#t4").click(function() {
+	  removeReflection();
+	  lateral -= 0.1;
+	  makeReflection();
+	  console.log("top= "+top+" side= "+lateral+" off= "+offset);
+	});
+	init();
+	animate();
+
+	function makeTrapezoid(l, t, b) {
+	  var geometry = new THREE.BufferGeometry();
+	  var vertices = [];
+	  var normals = [];
+	  var indices = [];
+	  var uvs = [];
+	  
+	  var tmp = (t-b)/2;
+	  
+	  vertices.push (-b/2,0,0, b/2,0,0, t/2,l,0, -t/2,l,0);
+	  normals.push (0,0,1, 0,0,1, 0,0,1, 0,0,1);
+	  indices.push (0,1,2, 0,2,3);
+	  uvs.push (tmp/t,0, b-tmp/t,0, b,b, 0,b);
+
+	  geometry.setIndex (indices);
+	  geometry.addAttribute ('position', new THREE.Float32BufferAttribute(vertices,3));
+	  geometry.addAttribute ('normal', new THREE.Float32BufferAttribute(normals,3));
+	  geometry.addAttribute ('uvs', new THREE.Float32BufferAttribute(uvs,2));
+  
+
+
+	  var verticalMirror = new Reflector( geometry, 
+	     {
+						clipBias: 0.003,
+						textureWidth: WIDTH * window.devicePixelRatio,
+						textureHeight: HEIGHT * window.devicePixelRatio,
+						color: 0x999999,
+						recursion: 1
+		 } );
+
+	 //let verticalMirror = new THREE.Mesh (geometry, new THREE.MeshNormalMaterial());
+	 verticalMirror.name = "r"+index;
+	 index++;
+	 console.log(verticalMirror.name);
+	 return verticalMirror;
+	 
+	}
+
+function makeTrapezoid3(l) {
+	var geometry = new THREE.PlaneGeometry (6,l);
+
+	var verticalMirror = new Reflector( geometry, 
+	     {
+						clipBias: 0.003,
+						textureWidth: WIDTH * window.devicePixelRatio,
+						textureHeight: HEIGHT * window.devicePixelRatio,
+						color: 0x999999,
+						recursion: 3
+		 } );
+
+
+	let group0 = new THREE.Object3D();
+	group0.add (verticalMirror);
+	verticalMirror.position.set (0, l/2, 0);
+	var group = new THREE.Object3D();
+	group.add (group0);
+	
+	group0.rotation.x = Math.PI/2;
+	group0.rotation.z = -Math.PI/2;
+	return group;
+	 
+}
+
+	function init() {
+	  scene = new THREE.Scene();
+	  scene.background = new THREE.Color(0x999999);
+	  
+	  renderer = new THREE.WebGLRenderer();
+	   WIDTH = window.innerWidth;
+	   HEIGHT = window.innerHeight;
+	  renderer.setSize(WIDTH, HEIGHT);
+	  //renderer.setClearColor(0x888888);
+	  document.body.appendChild(renderer.domElement);
+
+	  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 3000);
+	  camera.position.set(10,2,10);
+  
+	  let controls = new OrbitControls(camera, renderer.domElement);
+	controls.enableKeys = false;
+	
+	  window.addEventListener('resize', onWindowResize, false);
+	  scene.add (new THREE.AxesHelper(10));
+ 
+  	let loader = new THREE.TextureLoader();
+
+	// checkerboard floor
+  	let tex  = loader.load ("https://i.imgur.com/p8CRm9W.jpg");
+  	tex.repeat.set (10,10);
+  	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+	
+	  let floor = new THREE.Mesh (new THREE.PlaneGeometry (100,100), 
+	  	new THREE.MeshBasicMaterial({map: tex}));
+	  floor.rotation.x = -Math.PI/2;
+	//  scene.add (floor);
+
+	// picachu
+  	let picatex  = loader.load ("https://i.imgur.com/GMq5omF.png");//pica ("https://i.imgur.com/LFBQQkd.png")
+	
+	let pica = new THREE.Mesh (new THREE.PlaneGeometry (2,2), 
+	  	new THREE.MeshBasicMaterial({map: picatex, transparent: true}));
+	
+	offset = 2.7//1.5;
+	
+	pica0 = pica.clone();
+	  pica0.position.set (offset,0,0);
+	  pica0.rotation.y = -Math.PI/2;
+	  pica0.rotation.x = -Math.PI/2;
+	  pica0.rotation.order = 'YXZ'
+	  scene.add (pica0);
+
+	pica1 = pica.clone();
+	  pica1.position.set (-offset,0,0);
+	  pica1.rotation.y = Math.PI/2;
+	  pica1.rotation.x = -Math.PI/2;
+	  pica1.rotation.order = 'YXZ'
+	  scene.add (pica1);
+
+	pica2 = pica.clone();
+	  pica2.position.set (0,0,offset);
+	  pica2.rotation.y = Math.PI;
+	  pica2.rotation.x = -Math.PI/2;
+	  pica2.rotation.order = 'YXZ'
+	  scene.add (pica2);
+
+	pica3 = pica.clone();
+	  pica3.position.set (0,0,-offset);
+	  //pica3.rotation.y = Math.PI;
+	  pica3.rotation.x = -Math.PI/2;
+	  pica3.rotation.order = 'YXZ'
+	  scene.add (pica3);
+
+  //////////////////////////////////////////////////////////////
+  bottom = 1;
+  top = 6;
+  lateral = 4.7;
+  var oneside = (top-bottom)/2;
+  var l = Math.sqrt (lateral*lateral - oneside*oneside);
+  var theta = Math.acos (oneside/l);
+  var trape;
+  //offset = 0.2+lateral*Math.cos(theta)/2;
+
+  trape = makeTrapezoid (l, top, bottom);
+  scene.add( trape);
+  trape.position.set (0.5,0,0)
+  trape.rotation.y = Math.PI/2;
+  trape.rotation.x = Math.PI/2 - theta;
+  trape.rotation.order = 'YXZ';
+  
+  trape = makeTrapezoid (l, top, bottom)
+  scene.add( trape);
+  trape.position.set (-.5,0,0)
+  trape.rotation.y = -Math.PI/2;
+  trape.rotation.x = Math.PI/2 - theta;
+  trape.rotation.order = 'YXZ';
+ 
+  trape = makeTrapezoid (l, top, bottom)
+  scene.add( trape);
+  trape.position.set (0,0,.5)
+  trape.rotation.x = Math.PI/2 - theta;
+
+  trape = makeTrapezoid (l, top, bottom)
+  scene.add( trape);
+  trape.position.set (0,0,-.5)
+  trape.rotation.y = Math.PI;
+  trape.rotation.x = Math.PI/2 - theta;
+  trape.rotation.order = 'YXZ';
+
+}
+
+	function onWindowResize() {
+	  camera.aspect = window.innerWidth / window.innerHeight;
+	  camera.updateProjectionMatrix();
+	  renderer.setSize(window.innerWidth, window.innerHeight);
+	}
+
+	function animate() {
+	  requestAnimationFrame(animate);
+	  renderer.render(scene, camera);
+	  
+	  keyboard.update();
+	  if (keyboard.down ('U')) 
+	  	offset += 0.1;
+	  if (keyboard.down ('D'))
+	  	offset -= 0.1;
+	  //console.log (offset);
+	  
+	  pica0.position.set (offset,0,0);
+	  pica1.position.set (-offset,0,0);
+	  pica2.position.set (0,0,offset);
+	  pica3.position.set (0,0,-offset);
+	  	  
+
+	}
+
+
+</script>
+</body>
+
+</html>

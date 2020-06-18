@@ -148,17 +148,17 @@ function makeTrapezoid3(l) {
   	let picatex  = loader.load ("https://i.imgur.com/GMq5omF.png");
 	
 	var bottom = 2
-	var top = 12//6 +3.25
+	var top = 11.0625//12.6//12//6 +3.25
 	var lateral = 9
 	var oneside = (top - bottom)/2
 	var l = Math.sqrt (lateral*lateral - oneside*oneside);
 	var theta = Math.acos (oneside/l);
-	var side = lateral * Math.cos(theta);
+	var side = 5//lateral * Math.cos(theta);
 	
-	let pica = new THREE.Mesh (new THREE.PlaneGeometry (4,4), 
+	let pica = new THREE.Mesh (new THREE.PlaneGeometry (side,side), 
 	  	new THREE.MeshBasicMaterial({map: picatex, transparent: true}));
 	
-	offset = 3//side/2 + bottom/2; //1.5;
+	offset = side/2 + bottom/2; //1.5;
 	
 	pica0 = pica.clone();
 	  pica0.position.set (offset,0,0);

@@ -56,7 +56,7 @@ function init() {
 
   camera = new THREE.PerspectiveCamera(90,1, 1, 1000);
   camera.position.z = near;
-  //let controls = new THREE.OrbitControls(camera, renderer.domElement);
+  let controls = new THREE.OrbitControls(camera, renderer.domElement);
   
 	acamera = new THREE.PerspectiveCamera ();
   acamera.position.set (0,0,near);
@@ -150,6 +150,8 @@ function animate() {
 		//console.log(am.position);
 		am.position.set(0, -L/2+5, -10)
 	}
+	//acamera.position.x = -12;
+	//camera.position.x = -12;
 	keyboard.update();
   if (keyboard.pressed('W'))
     acamera.position.y += 0.1;

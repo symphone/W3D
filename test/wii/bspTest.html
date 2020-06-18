@@ -13,6 +13,7 @@
       left: 50vw;
     }
 	#container{
+		text-align:center;
 		width: 720px;
 		height: 720px;
 	}
@@ -30,25 +31,47 @@
   <script type="module">
     //import * as THREE from './build/three.module.js';
     //import { OrbitControls } from './jsm/controls/OrbitControls.js';
+	import { Line2 } from 'https://raw.githack.com/mrdoob/three.js/master/examples/jsm/lines/Line2.js';
+	import { LineMaterial } from 'https://raw.githack.com/mrdoob/three.js/master/examples/jsm/lines/LineMaterial.js';
+	import { LineGeometry } from 'https://raw.githack.com/mrdoob/three.js/master/examples/jsm/lines/LineGeometry.js';
     var frame, scene, camera, camera2, renderer, light, controls, Boxc;
     var stats, cursor = new THREE.Vector2(), Zplane = -3, frontSight, keyboard = new KeyboardState(), player = new THREE.Object3D(), flashLight, toggle = true, spotLightHelper, target, isMoving = false;
     var map =  [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+                [0,-1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                 [0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-                [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                [0,-1, 1, 0, 0, 1, 0,-1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
                 [0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
                 [0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-                [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                [0, 0, 0, 1, 0, 0,-1, 1,-1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
                 [0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
                 [0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-                [0, 0, 1, 1, 1, 0, 1, 2, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+                [0,-1, 1, 1, 1,-1, 1, 1, 1, 1, 1,-1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
                 [0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+                [0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+	/* 
+		width:32
+		height:12
+		start:(7, 0.5, 9)
+		finish:(22, 0.5, 0)
+	*/			
 	var L = 0.2, near = L/2, flag = false, flag2 = false;
 	var theta = 0, phi = 0;
 	var forward = new THREE.Vector2(0, 1), back =  new THREE.Vector2(0, -1), left = new THREE.Vector2(1, 0), right = new THREE.Vector2(-1, 0)
-	var startPoint = new THREE.Vector2(22, 0), curPoint = new THREE.Vector2()
-	
+	var startPoint = new THREE.Vector2(22, 0), curPoint = new THREE.Vector2(),
+		dirs = [new THREE.Vector2(0, -1), //Up
+				new THREE.Vector2(1, 0), //Right
+				new THREE.Vector2(0, 1),  //Down
+				new THREE.Vector2(-1, 0)], //Left
+		/*direction = {	Up: 0,
+						Right: 1,
+						Down: 2,
+						left: 3},*/
+		playerDir = 2;
+	var pickObject = []
+	var hitObj;
+	var raycaster = new THREE.Raycaster()
+	var isHit = false;
+	var mouse = new THREE.Vector2();
 
    /* 
 	$(function() {
@@ -409,16 +432,9 @@
 		  
 			camera.projectionMatrix.makePerspective (left, right, top, bottom, near, far);
 			Boxc.position.copy(camera.position) ; 
-		}
-
-    function rotMatrix2D(vec2, angle){
-		let tmpX = vec2.x, tmpY = vec2.y;
-		vec2.x = tmpX * Math.cos(angle) - tmpY * Math.sin(angle);
-		vec2.y = tmpY * Math.cos(angle) + tmpX * Math.sin(angle);
-		return vec2;
 	}
-	
-	init();
+
+    init();
   	animate();
 	
 
@@ -447,21 +463,9 @@
       light.position.set(20, 100, 10);
       scene.add(light);
 
-      var lightA = new THREE.AmbientLight(0x111111, 3);
+      var lightA = new THREE.AmbientLight(0x111111, 0.5);
       scene.add(lightA);
 
-      flashLight = new THREE.SpotLight(0xffffff, 1, 200, 0.35, 0.333);
-      flashLight.position.set(0, 0, 0);
-      //target = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial());
-      target = new THREE.Object3D();
-      target.position.z -= 1;
-      flashLight.target = target;
-      //camera.add(flashLight);
-      //scene.add(target);
-
-      //scene.add(flashLight);
-      /*spotLightHelper = new THREE.SpotLightHelper( flashLight );
-      scene.add( spotLightHelper );*/
 		frontSight = new THREE.Mesh(new THREE.CircleGeometry(0.1,20), new THREE.MeshBasicMaterial({
 			color: 'white',
 			depthTest: false,
@@ -474,53 +478,71 @@
 	  let box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({color:'red'}));	
 	  Boxc = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshBasicMaterial({color:'blue'}));
 	  Boxc.position.copy(camera.position); 
-      player.add(camera, flashLight, target, frontSight, box, Boxc);
-      player.position.set(22, 0.5, 0);
+      player.add(camera, frontSight, box, Boxc);
+      player.position.set(7, 0.5, 9);
       player.rotation.y = Math.PI;
       scene.add(player);
-	  makePerspective(); 
+	  makePerspective();
+	  
+	  var bbox = new THREE.Mesh(new THREE.BoxGeometry(0.25,0.25,0.25), new THREE.MeshBasicMaterial({color:"green"}));
+	  pickObject.push(bbox);
+	  bbox.position.set(7, 0.125, 6);
+	  scene.add(bbox);
+	  var geometry = new THREE.Geometry();
+	  geometry.vertices.push(
+		new THREE.Vector3(0, 0, 0),
+		new THREE.Vector3(0.6, 0, 0.8) //dir 0.6 0 0.8
+	  );
+
+	  var line = new THREE.Line( geometry, new THREE.LineBasicMaterial({color:0x0000ff, linewidth:3}) );
+	  //scene.add( line );
+	  line.position.set(7.6, 0.5, 9.4)
+	  
 	  
       createDungeon();
 	  ////////////
-	  curPoint.copy(startPoint)
+	  curPoint.copy(startPoint);
 	  
       /////
       window.addEventListener('resize', onWindowResize, false);
-	  //window.addEventListener('mousemove', onMouseMove, false);
+	  window.addEventListener('mousemove', onMouseMove, false);
+	  window.addEventListener('click', onMouseClick, false);
     }
     function animate() {
-      //flashLight.position.copy(player.position);
-      //flashLight.position.z += 0.5;
-      //spotLightHelper.update();
-      /*target.position.copy(camera.position);
-      target.position.z += 1;*/
       keyboard.update();
-	  let nextPoint, tmpX, tmpY;
+	  rayCaster();
+	  let nextPoint;
       if(isMoving == false){
     	  if (keyboard.pressed ('W')){
-			nextPoint = curPoint.clone().add(forward);
-			console.log(nextPoint.x + " " + nextPoint.y + " " + map[nextPoint.y][nextPoint.x])
-			if(map[nextPoint.y][nextPoint.x] == 1){
-			  curPoint.add(forward);
-			  let v1 = new THREE.Vector3(0, 0, 1).applyQuaternion( player.quaternion );
-			  let Dis = player.position.clone().add(v1.multiplyScalar(-1));
-			  let tween = new TWEEN.Tween(player.position)
-						.to(Dis, 200)
-						.onStart(function(){
-						  isMoving = true;
-						})
-						.onComplete(function(){
-						  isMoving = false;
-						})
-						.start();
-				//camera.translateZ(-1);
+			let x = player.position.x + dirs[playerDir].x;
+			let y = player.position.z + dirs[playerDir].y;
+		    if(x >= 0 && x < 32 && y < 12 && y >= 0){
+				
+				if(map[y][x] == 1 || map[y][x] == 2){
+				  let v1 = new THREE.Vector3(0, 0, 1).applyQuaternion( player.quaternion );
+				  let Dis = player.position.clone().add(v1.multiplyScalar(-1));
+				  let tween = new TWEEN.Tween(player.position)
+							.to(Dis, 200)
+							.onStart(function(){
+							  isMoving = true;
+							})
+							.onComplete(function(){
+							  isMoving = false;
+							  player.position.x = parseFloat(player.position.x.toFixed(0));
+							  player.position.z = parseFloat(player.position.z.toFixed(0));
+							})
+							.start();
+					//camera.translateZ(-1);
+				}
 			}
-        }
+			
+         }
     	  else if (keyboard.pressed ('S')){
-			nextPoint = curPoint.clone().add(back);
-			//console.log(nextPoint.x + " " + nextPoint.y + " " + map[nextPoint.y][nextPoint.x])
-			if(map[nextPoint.y][nextPoint.x] == 1){
-				  curPoint.add(back);
+			let x = player.position.x - dirs[playerDir].x;
+			let y = player.position.z - dirs[playerDir].y;
+			if(x >= 0 && x < 32 && y < 12 && y >= 0){
+		  
+				if(map[y][x] == 1 || map[y][x] == 2){
 				  let v1 = new THREE.Vector3(0, 0, 1).applyQuaternion( player.quaternion );
 				  let Dis = player.position.clone().add(v1.multiplyScalar(1));
 				  let tween = new TWEEN.Tween(player.position)
@@ -530,15 +552,18 @@
 							})
 							.onComplete(function(){
 							  isMoving = false;
+							  player.position.x = parseFloat(player.position.x.toFixed(0));
+							  player.position.z = parseFloat(player.position.z.toFixed(0));
 							})
 							.start();
 					//camera.translateZ(1);
+				}
 			}
         }
         else if (keyboard.pressed ('A')){
-			forward = rotMatrix2D(forward, -Math.PI/2)
-			back = rotMatrix2D(back, -Math.PI/2)
-			console.log(forward.x + " " + forward.y)
+			/*playerDir -= 1;
+			if(playerDir<0) playerDir = 3;
+			
             let R = {x: 0, y:player.rotation.y + Math.PI/2, z:0};
             let tween = new TWEEN.Tween(player.rotation)
                       .to(R, 500)
@@ -549,12 +574,12 @@
                         isMoving = false;
                       })
                       .start();
-    	  	//camera.rotation.y -= Math.PI/2;
+    	  	//camera.rotation.y -= Math.PI/2;*/
+			player.position.x += 0.01;
         }
         else if (keyboard.pressed ('D')){
-			forward = rotMatrix2D(forward, Math.PI/2)
-			back = rotMatrix2D(back, Math.PI/2)
-			console.log(forward.x + " " + forward.y)
+			/*playerDir += 1;
+			if(playerDir>3) playerDir = 0;
             let R = {x: 0, y:player.rotation.y - Math.PI/2, z:0};
             let tween = new TWEEN.Tween(player.rotation)
                         .to(R, 500)
@@ -565,7 +590,8 @@
                           isMoving = false;
                         })
                         .start();
-            //camera.rotation.y += Math.PI/2;
+            //camera.rotation.y += Math.PI/2;*/
+			player.position.x -= 0.01;
         }
 		else if(keyboard.pressed ('Z')){
 			if(theta <= Math.PI/2)
@@ -576,6 +602,20 @@
 			if(theta >= -Math.PI/2)
 				theta -= 0.1;
 			flag2 = true;
+		}
+		else if(keyboard.pressed ('C')){
+			if(phi <= Math.PI/2)
+				phi += 0.1;
+			flag2 = true;
+		}
+		else if(keyboard.pressed ('V')){
+			if(phi >= -Math.PI/2)
+				phi -= 0.1;
+			flag2 = true;
+		}
+		else if(keyboard.pressed ('R')){
+			theta = phi = 0;
+			player.position.set(7, 0.5, 9);
 		}
       }
 
@@ -594,12 +634,8 @@
 
     function createDungeon(){
       let texture = new THREE.TextureLoader().load("https://raw.githubusercontent.com/symphone/W3D/master/test/hologramTest/images/8021-diffuse.jpg");
-	  //texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-	  //texture.repeat.set(3,3)
       let bump = new THREE.TextureLoader().load("https://raw.githubusercontent.com/symphone/W3D/master/test/hologramTest/images/8021-bump.jpg");
-      //bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
-	  //bump.repeat.set(3,3)
-	  let material = new THREE.MeshPhongMaterial({color: 0x666666, map:texture, bumpMap:bump, bumpScale:0.1});
+      let material = new THREE.MeshPhongMaterial({color: 0x666666, map:texture, bumpMap:bump, bumpScale:0.1});
       let basicWallGeom = new THREE.BoxGeometry(1, 1, 1);
       let basicTileGeom = new THREE.PlaneGeometry(1, 1, 1);
 
@@ -608,15 +644,35 @@
         for (let x = 0; x < row.length; x++){
           let type = row[x];
 
-          if (type == 0) {
+          if (type == 0 || type == -1) {
                let mesh = new THREE.Mesh(basicWallGeom, material);
               // mesh.castShadow = true;
               // mesh.receiveShadow = true;
-
+				if(type == -1){
+					
+					for(let i = 0;i < 4; i++ ){
+						let yy = y + dirs[i].y;
+						let xx = x + dirs[i].x;
+						if(yy >=12 || yy <0)continue;
+						if(xx >=32 || xx <0)continue;
+						if(map[yy][xx] == 1){
+							let torch = new THREE.Object3D();
+							torch.position.set(x + dirs[i].x/2, 0.5, y + dirs[i].y/2);
+							let light = new THREE.PointLight( 0xf13c0e, 2, 2 );
+							light.position.y += 0.2;
+							light.add( new THREE.Mesh( new THREE.SphereBufferGeometry( 0.05, 16, 8 ), new THREE.MeshBasicMaterial({ color: 0xf13c0e }) ) );
+							torch.add(light);
+							let stick = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3, 20), new THREE.MeshBasicMaterial({color: 0x804000}));
+							torch.add(stick);
+							scene.add(torch);
+						}
+					}
+				}
                mesh.position.x = x;
                mesh.position.y = 0.5;
                mesh.position.z = y;
                scene.add(mesh);
+			   
            }
            else if (type == 1 || type == 2) {
                let floorMesh = new THREE.Mesh(basicTileGeom, material);
@@ -638,6 +694,8 @@
                ceilMesh.position.z = y;
                ceilMesh.rotation.x = Math.PI*0.5;
                scene.add(ceilMesh);
+			   
+			   
            }
         }
       }
@@ -649,7 +707,7 @@
 	  mouse.x = (event.clientX / ww) * 2 - 1;
 	  mouse.y = -(event.clientY / hh) * 2 + 1;
 
-	  let vec = new THREE.Vector3(mouse.x, mouse.y, -3);
+	  let vec = new THREE.Vector3(mouse.x, mouse.y, -2);
 	  /*vec.unproject(camera);
 	  let dir = vec.sub(player.position).normalize();
 	  let dis = (Zplane -player.position.z) / dir.z;
@@ -657,6 +715,68 @@
 	  frontSight.position.copy(vec);
 	  //frontSight.position.sub(new THREE.Vector3(20*Math.sin(theta), 20*Math.sin(phi), -2));
 
+	}
+	function onMouseClick() {
+		let vec = frontSight.position.clone()//new THREE.Vector3(mouse.x, mouse.y, 0.5);
+		vec.unproject(camera);
+		let dir = vec.clone().sub(camera.getWorldPosition()).normalize();
+		console.log(dir)
+		var positions = [];
+		positions.push(0, 0, 0);
+		let vec2 = vec.clone().add(dir).add(dir).add(dir);
+		positions.push(0, 0, 0.5);
+		var geometry = new LineGeometry();
+		geometry.setPositions(positions);
+		/*geometry.vertices.push(
+		vec,
+		vec.clone().add(dir).add(dir).add(dir)
+		);*/
+		var matLine = new LineMaterial( {
+				color: 0xff0000,
+				linewidth: 0.3, // in pixels
+				vertexColors: THREE.VertexColors,
+				//resolution:  // to be set by renderer, eventually
+				dashed: false
+			} );
+		var line = new Line2( geometry, matLine );
+		line.computeLineDistances();
+		line.scale.set( 0.3, 0.3, 0.3 );
+		scene.add( line );	
+	  /*var line = new THREE.Line( geometry, new THREE.LineBasicMaterial({color:0x00ff00, linewidth:3}) );
+	  scene.add( line );*/
+	  if (isHit) {
+		//console.log(hitPos);
+		scene.remove(hitObj);
+		let index = pickObject.indexOf(hitObj);
+		if(index > -1)
+		  pickObject.splice(index, 1);
+		  
+		//score += 100;
+		/*
+		explosions.push(new Explosion(hitPos.x, hitPos.y, hitPos.z));
+		setInterval(function(){
+		  explosions[0].destroy();
+		  explosions.shift();
+		}, 5000);
+		*/
+		
+		//$('#score').html("SCORE:" + score);
+		//console.log("Hit");
+	  } else {
+		console.log("No Hit");
+	  }
+	}
+	function rayCaster(){
+	  raycaster.setFromCamera(mouse, camera);
+
+	  var intersects = raycaster.intersectObjects(pickObject);
+	  if (intersects.length > 0) {
+		isHit = true;
+		//hitPos = intersects[0].point;
+		hitObj = intersects[0].object;
+	  } else {
+		isHit = false;
+	  }
 	}
     function onWindowResize() {
 	  let ww = $('#container').innerWidth();
